@@ -1,13 +1,15 @@
 import { Activity, FamilyMember, ActivityCategory } from '@/types/family';
-import { Clock, MapPin, Check, Circle } from 'lucide-react';
+import { Clock, MapPin, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 
 interface ActivityCardProps {
   activity: Activity;
   familyMembers: FamilyMember[];
   onToggleComplete?: (id: string) => void;
+  onEdit?: (activity: Activity) => void;
   compact?: boolean;
 }
 
@@ -19,7 +21,7 @@ const categoryStyles: Record<ActivityCategory, { bg: string; text: string; label
   personal: { bg: 'category-personal-soft', text: 'text-category-personal', label: 'Personal' },
 };
 
-export function ActivityCard({ activity, familyMembers, onToggleComplete, compact }: ActivityCardProps) {
+export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit, compact }: ActivityCardProps) {
   const style = categoryStyles[activity.category];
   const assignedMembers = familyMembers.filter(m => activity.assignedTo.includes(m.id));
   const children = familyMembers.filter(m => activity.assignedChildren.includes(m.id));
@@ -71,13 +73,32 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, compac
   }
 
   return (
-    <div className={cn(
-      "group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-4 transition-all duration-300",
-      "hover:shadow-elevated hover:-translate-y-0.5 hover:border-border",
-      activity.completed && "opacity-70"
-    )}>
+    <div 
+      className={cn(
+        "group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-4 transition-all duration-300",
+        "hover:shadow-elevated hover:-translate-y-0.5 hover:border-border",
+        activity.completed && "opacity-70",
+        onEdit && "cursor-pointer"
+      )}
+      onClick={() => onEdit?.(activity)}
+    >
       {/* Category indicator */}
       <div className={cn("absolute top-0 left-0 w-1 h-full", style.bg.replace('-soft', ''))} />
+
+      {/* Edit button */}
+      {onEdit && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(activity);
+          }}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      )}
 
       <div className="pl-3">
         <div className="flex items-start justify-between mb-3">
@@ -103,6 +124,7 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, compac
           <Checkbox 
             checked={activity.completed}
             onCheckedChange={() => onToggleComplete?.(activity.id)}
+            onClick={(e) => e.stopPropagation()}
             className="h-6 w-6"
           />
         </div>

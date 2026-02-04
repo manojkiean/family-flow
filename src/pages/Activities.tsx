@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ActivityCard } from '@/components/dashboard/ActivityCard';
+import { ActivityForm } from '@/components/activities/ActivityForm';
 import { familyMembers, activities as initialActivities } from '@/data/mockData';
 import { Activity, ActivityCategory } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Plus, CheckCircle2, Circle } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { Search, Plus, CheckCircle2, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const categories: { value: ActivityCategory | 'all'; label: string }[] = [
@@ -23,11 +24,79 @@ const ActivitiesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ActivityCategory | 'all'>('all');
   const [showCompleted, setShowCompleted] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<Activity | undefined>();
 
   const handleToggleComplete = (id: string) => {
     setActivities(prev => 
       prev.map(a => a.id === id ? { ...a, completed: !a.completed } : a)
     );
+  };
+
+  const handleEditActivity = (activity: Activity) => {
+    setEditingActivity(activity);
+    setFormOpen(true);
+  };
+
+  const handleFormSubmit = (data: any) => {
+    const startDateTime = new Date(data.date);
+    const [startHours, startMinutes] = data.startTime.split(':').map(Number);
+    startDateTime.setHours(startHours, startMinutes, 0, 0);
+
+    let endDateTime: Date | undefined;
+    if (data.endTime) {
+      endDateTime = new Date(data.date);
+      const [endHours, endMinutes] = data.endTime.split(':').map(Number);
+      endDateTime.setHours(endHours, endMinutes, 0, 0);
+    }
+
+    if (editingActivity) {
+      setActivities(prev => prev.map(a => 
+        a.id === editingActivity.id 
+          ? {
+              ...a,
+              title: data.title,
+              description: data.description,
+              category: data.category,
+              startTime: startDateTime,
+              endTime: endDateTime,
+              recurrence: data.recurrence,
+              assignedTo: data.assignedTo,
+              assignedChildren: data.assignedChildren,
+              location: data.location,
+              priority: data.priority,
+              notes: data.notes,
+            }
+          : a
+      ));
+      toast({
+        title: "Activity Updated",
+        description: `"${data.title}" has been updated successfully.`,
+      });
+    } else {
+      const newActivity: Activity = {
+        id: Date.now().toString(),
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        recurrence: data.recurrence,
+        assignedTo: data.assignedTo,
+        assignedChildren: data.assignedChildren,
+        location: data.location,
+        priority: data.priority,
+        notes: data.notes,
+        completed: false,
+        createdBy: '1',
+      };
+      setActivities(prev => [...prev, newActivity]);
+      toast({
+        title: "Activity Created",
+        description: `"${data.title}" has been added to your schedule.`,
+      });
+    }
+    setEditingActivity(undefined);
   };
 
   const filteredActivities = activities.filter(activity => {
@@ -54,7 +123,13 @@ const ActivitiesPage = () => {
             </p>
           </div>
 
-          <Button className="gradient-warm shadow-soft">
+          <Button 
+            className="gradient-warm shadow-soft"
+            onClick={() => {
+              setEditingActivity(undefined);
+              setFormOpen(true);
+            }}
+          >
             <Plus className="h-4 w-4 mr-2" />
             New Activity
           </Button>
@@ -113,6 +188,7 @@ const ActivitiesPage = () => {
                 activity={activity}
                 familyMembers={familyMembers}
                 onToggleComplete={handleToggleComplete}
+                onEdit={handleEditActivity}
               />
             ))
           ) : (
@@ -134,6 +210,15 @@ const ActivitiesPage = () => {
           )}
         </div>
       </div>
+
+      {/* Activity Form Dialog */}
+      <ActivityForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        familyMembers={familyMembers}
+        activity={editingActivity}
+        onSubmit={handleFormSubmit}
+      />
     </AppLayout>
   );
 };
