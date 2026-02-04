@@ -5,8 +5,10 @@ import { ActivityCard } from '@/components/dashboard/ActivityCard';
 import { FamilyMemberCard } from '@/components/dashboard/FamilyMemberCard';
 import { UpcomingSection } from '@/components/dashboard/UpcomingSection';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+import { ActivityForm } from '@/components/activities/ActivityForm';
 import { familyMembers, activities as initialActivities } from '@/data/mockData';
-import { Activity } from '@/types/family';
+import { Activity, ActivityCategory } from '@/types/family';
+import { toast } from '@/hooks/use-toast';
 import { 
   CheckCircle2, 
   Clock, 
@@ -18,6 +20,9 @@ import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const [activities, setActivities] = useState<Activity[]>(initialActivities);
+  const [formOpen, setFormOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<ActivityCategory | undefined>();
+  const [editingActivity, setEditingActivity] = useState<Activity | undefined>();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -38,6 +43,80 @@ const Index = () => {
     setActivities(prev => 
       prev.map(a => a.id === id ? { ...a, completed: !a.completed } : a)
     );
+  };
+
+  const handleOpenForm = (category?: ActivityCategory) => {
+    setEditingActivity(undefined);
+    setSelectedCategory(category);
+    setFormOpen(true);
+  };
+
+  const handleEditActivity = (activity: Activity) => {
+    setEditingActivity(activity);
+    setSelectedCategory(undefined);
+    setFormOpen(true);
+  };
+
+  const handleFormSubmit = (data: any) => {
+    const startDateTime = new Date(data.date);
+    const [startHours, startMinutes] = data.startTime.split(':').map(Number);
+    startDateTime.setHours(startHours, startMinutes, 0, 0);
+
+    let endDateTime: Date | undefined;
+    if (data.endTime) {
+      endDateTime = new Date(data.date);
+      const [endHours, endMinutes] = data.endTime.split(':').map(Number);
+      endDateTime.setHours(endHours, endMinutes, 0, 0);
+    }
+
+    if (editingActivity) {
+      // Update existing activity
+      setActivities(prev => prev.map(a => 
+        a.id === editingActivity.id 
+          ? {
+              ...a,
+              title: data.title,
+              description: data.description,
+              category: data.category,
+              startTime: startDateTime,
+              endTime: endDateTime,
+              recurrence: data.recurrence,
+              assignedTo: data.assignedTo,
+              assignedChildren: data.assignedChildren,
+              location: data.location,
+              priority: data.priority,
+              notes: data.notes,
+            }
+          : a
+      ));
+      toast({
+        title: "Activity Updated",
+        description: `"${data.title}" has been updated successfully.`,
+      });
+    } else {
+      // Create new activity
+      const newActivity: Activity = {
+        id: Date.now().toString(),
+        title: data.title,
+        description: data.description,
+        category: selectedCategory || data.category,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        recurrence: data.recurrence,
+        assignedTo: data.assignedTo,
+        assignedChildren: data.assignedChildren,
+        location: data.location,
+        priority: data.priority,
+        notes: data.notes,
+        completed: false,
+        createdBy: '1',
+      };
+      setActivities(prev => [...prev, newActivity]);
+      toast({
+        title: "Activity Created",
+        description: `"${data.title}" has been added to your schedule.`,
+      });
+    }
   };
 
   return (
@@ -75,7 +154,7 @@ const Index = () => {
         </div>
 
         {/* Quick Actions */}
-        <QuickActions />
+        <QuickActions onAddActivity={handleOpenForm} />
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-6">
@@ -97,6 +176,7 @@ const Index = () => {
                     activity={activity}
                     familyMembers={familyMembers}
                     onToggleComplete={handleToggleComplete}
+                    onEdit={handleEditActivity}
                   />
                 ))
               ) : (
@@ -139,6 +219,15 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Activity Form Dialog */}
+      <ActivityForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        familyMembers={familyMembers}
+        activity={editingActivity}
+        onSubmit={handleFormSubmit}
+      />
     </AppLayout>
   );
 };
