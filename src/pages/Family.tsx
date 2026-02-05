@@ -1,12 +1,17 @@
 import { AppLayout } from '@/components/layout/AppLayout';
-import { familyMembers, activities } from '@/data/mockData';
+import { useFamilyMembers, useActivities } from '@/hooks/useAirtable';
 import { FamilyMember, Activity } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Settings, ChevronRight, Crown, Star } from 'lucide-react';
+import { Plus, Settings, ChevronRight, Crown, Star, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const FamilyPage = () => {
+  const { familyMembers, loading: membersLoading } = useFamilyMembers();
+  const { activities, loading: activitiesLoading } = useActivities();
+
+  const loading = membersLoading || activitiesLoading;
+
   const getMemberStats = (member: FamilyMember) => {
     const memberActivities = activities.filter(
       a => a.assignedTo.includes(member.id) || a.assignedChildren.includes(member.id)
@@ -20,6 +25,16 @@ const FamilyPage = () => {
 
   const parents = familyMembers.filter(m => m.role === 'parent');
   const children = familyMembers.filter(m => m.role === 'child');
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

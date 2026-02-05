@@ -6,7 +6,7 @@ import { FamilyMemberCard } from '@/components/dashboard/FamilyMemberCard';
 import { UpcomingSection } from '@/components/dashboard/UpcomingSection';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActivityForm } from '@/components/activities/ActivityForm';
-import { familyMembers, activities as initialActivities } from '@/data/mockData';
+import { useFamilyMembers, useActivities } from '@/hooks/useAirtable';
 import { Activity, ActivityCategory } from '@/types/family';
 import { toast } from '@/hooks/use-toast';
 import { 
@@ -14,15 +14,19 @@ import {
   Clock, 
   Users, 
   TrendingUp,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
-  const [activities, setActivities] = useState<Activity[]>(initialActivities);
+  const { familyMembers, loading: membersLoading } = useFamilyMembers();
+  const { activities, loading: activitiesLoading, toggleComplete, addActivity, updateActivity } = useActivities();
   const [formOpen, setFormOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ActivityCategory | undefined>();
   const [editingActivity, setEditingActivity] = useState<Activity | undefined>();
+
+  const loading = membersLoading || activitiesLoading;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -39,10 +43,16 @@ const Index = () => {
   const completedToday = todayActivities.filter(a => a.completed).length;
   const pendingToday = todayActivities.filter(a => !a.completed).length;
 
-  const handleToggleComplete = (id: string) => {
-    setActivities(prev => 
-      prev.map(a => a.id === id ? { ...a, completed: !a.completed } : a)
-    );
+  const handleToggleComplete = async (id: string) => {
+    try {
+      await toggleComplete(id);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to update activity status",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleOpenForm = (category?: ActivityCategory) => {
@@ -57,7 +67,7 @@ const Index = () => {
     setFormOpen(true);
   };
 
-  const handleFormSubmit = (data: any) => {
+  const handleFormSubmit = async (data: any) => {
     const startDateTime = new Date(data.date);
     const [startHours, startMinutes] = data.startTime.split(':').map(Number);
     startDateTime.setHours(startHours, startMinutes, 0, 0);
@@ -69,55 +79,64 @@ const Index = () => {
       endDateTime.setHours(endHours, endMinutes, 0, 0);
     }
 
-    if (editingActivity) {
-      // Update existing activity
-      setActivities(prev => prev.map(a => 
-        a.id === editingActivity.id 
-          ? {
-              ...a,
-              title: data.title,
-              description: data.description,
-              category: data.category,
-              startTime: startDateTime,
-              endTime: endDateTime,
-              recurrence: data.recurrence,
-              assignedTo: data.assignedTo,
-              assignedChildren: data.assignedChildren,
-              location: data.location,
-              priority: data.priority,
-              notes: data.notes,
-            }
-          : a
-      ));
+    try {
+      if (editingActivity) {
+        await updateActivity(editingActivity.id, {
+          title: data.title,
+          description: data.description,
+          category: data.category,
+          startTime: startDateTime,
+          endTime: endDateTime,
+          recurrence: data.recurrence,
+          assignedTo: data.assignedTo,
+          assignedChildren: data.assignedChildren,
+          location: data.location,
+          priority: data.priority,
+          notes: data.notes,
+        });
+        toast({
+          title: "Activity Updated",
+          description: `"${data.title}" has been updated successfully.`,
+        });
+      } else {
+        await addActivity({
+          title: data.title,
+          description: data.description,
+          category: selectedCategory || data.category,
+          startTime: startDateTime,
+          endTime: endDateTime,
+          recurrence: data.recurrence,
+          assignedTo: data.assignedTo,
+          assignedChildren: data.assignedChildren,
+          location: data.location,
+          priority: data.priority,
+          notes: data.notes,
+          completed: false,
+          createdBy: familyMembers[0]?.id || '',
+        });
+        toast({
+          title: "Activity Created",
+          description: `"${data.title}" has been added to your schedule.`,
+        });
+      }
+    } catch (err) {
       toast({
-        title: "Activity Updated",
-        description: `"${data.title}" has been updated successfully.`,
-      });
-    } else {
-      // Create new activity
-      const newActivity: Activity = {
-        id: Date.now().toString(),
-        title: data.title,
-        description: data.description,
-        category: selectedCategory || data.category,
-        startTime: startDateTime,
-        endTime: endDateTime,
-        recurrence: data.recurrence,
-        assignedTo: data.assignedTo,
-        assignedChildren: data.assignedChildren,
-        location: data.location,
-        priority: data.priority,
-        notes: data.notes,
-        completed: false,
-        createdBy: '1',
-      };
-      setActivities(prev => [...prev, newActivity]);
-      toast({
-        title: "Activity Created",
-        description: `"${data.title}" has been added to your schedule.`,
+        title: "Error",
+        description: "Failed to save activity",
+        variant: "destructive",
       });
     }
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
