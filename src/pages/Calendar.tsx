@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { familyMembers, activities } from '@/data/mockData';
+import { useActivities } from '@/hooks/useAirtable';
 import { Activity, ActivityCategory } from '@/types/family';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,7 @@ const categoryColors: Record<ActivityCategory, string> = {
 };
 
 const CalendarPage = () => {
+  const { activities, loading } = useActivities();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'week' | 'month'>('week');
 
@@ -54,6 +55,16 @@ const CalendarPage = () => {
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
