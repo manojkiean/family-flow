@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { ActivityCard } from '@/components/dashboard/ActivityCard';
@@ -20,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
+  const navigate = useNavigate();
   const { familyMembers, loading: membersLoading } = useFamilyMembers();
   const { activities, loading: activitiesLoading, toggleComplete, addActivity, updateActivity } = useActivities();
   const [formOpen, setFormOpen] = useState(false);
@@ -181,7 +183,7 @@ const Index = () => {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-display font-bold text-xl">Today's Schedule</h2>
-              <Button variant="ghost" size="sm" className="text-primary">
+              <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/calendar')}>
                 View Calendar
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
@@ -221,7 +223,7 @@ const Index = () => {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-display font-semibold text-lg">Family</h3>
-                <Button variant="ghost" size="sm" className="text-primary">
+                <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/family')}>
                   Manage
                 </Button>
               </div>

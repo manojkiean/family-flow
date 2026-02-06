@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Activity, FamilyMember } from '@/types/family';
 import { ActivityCard } from './ActivityCard';
 import { Calendar, ChevronRight } from 'lucide-react';
@@ -10,6 +11,7 @@ interface UpcomingSectionProps {
 }
 
 export function UpcomingSection({ activities, familyMembers, onToggleComplete }: UpcomingSectionProps) {
+  const navigate = useNavigate();
   // Get tomorrow's activities
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -39,7 +41,7 @@ export function UpcomingSection({ activities, familyMembers, onToggleComplete }:
             <p className="text-sm text-muted-foreground">{formatDate(tomorrow)}</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" className="text-primary">
+        <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/calendar')}>
           View All
           <ChevronRight className="h-4 w-4 ml-1" />
         </Button>
