@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ActivityCard } from '@/components/dashboard/ActivityCard';
 import { ActivityForm } from '@/components/activities/ActivityForm';
-import { useFamilyMembers, useActivities } from '@/hooks/useAirtable';
+import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
 import { Activity, ActivityCategory } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

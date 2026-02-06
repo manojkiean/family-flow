@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { useActivities } from '@/hooks/useAirtable';
+import { useActivities } from '@/hooks/useDatabase';
 import { Activity, ActivityCategory } from '@/types/family';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

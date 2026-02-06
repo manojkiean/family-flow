@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          assigned_children: string[]
+          assigned_to: string[]
+          category: string
+          completed: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          priority: string
+          recurrence: string
+          start_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_children?: string[]
+          assigned_to?: string[]
+          category?: string
+          completed?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          priority?: string
+          recurrence?: string
+          start_time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_children?: string[]
+          assigned_to?: string[]
+          category?: string
+          completed?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          priority?: string
+          recurrence?: string
+          start_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      family_members: {
+        Row: {
+          avatar: string
+          color: string
+          created_at: string
+          id: string
+          name: string
+          role: string
+        }
+        Insert: {
+          avatar?: string
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          role?: string
+        }
+        Update: {
+          avatar?: string
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

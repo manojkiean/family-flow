@@ -1,5 +1,5 @@
 import { AppLayout } from '@/components/layout/AppLayout';
-import { useFamilyMembers, useActivities } from '@/hooks/useAirtable';
+import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
 import { FamilyMember, Activity } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
