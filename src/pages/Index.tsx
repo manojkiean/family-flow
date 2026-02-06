@@ -6,7 +6,7 @@ import { FamilyMemberCard } from '@/components/dashboard/FamilyMemberCard';
 import { UpcomingSection } from '@/components/dashboard/UpcomingSection';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActivityForm } from '@/components/activities/ActivityForm';
-import { useFamilyMembers, useActivities } from '@/hooks/useAirtable';
+import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
 import { Activity, ActivityCategory } from '@/types/family';
 import { toast } from '@/hooks/use-toast';
 import { 
