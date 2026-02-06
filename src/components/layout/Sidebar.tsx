@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -26,6 +26,7 @@ const navItems = [
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -67,7 +68,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           {/* Add Activity Button */}
           <div className="p-4">
-            <Button className="w-full gradient-warm hover:opacity-90 transition-opacity shadow-soft">
+            <Button 
+              className="w-full gradient-warm hover:opacity-90 transition-opacity shadow-soft"
+              onClick={() => {
+                navigate('/activities');
+                onClose();
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Activity
             </Button>
