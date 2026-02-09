@@ -175,9 +175,6 @@ const Index = () => {
           />
         </div>
 
-        {/* Calendar Widget */}
-        <DashboardCalendar activities={activities} />
-
         {/* Quick Actions */}
         <QuickActions onAddActivity={handleOpenForm} />
 
@@ -243,6 +240,9 @@ const Index = () => {
             </div>
           </div>
         </div>
+
+        {/* Calendar Widget */}
+        <DashboardCalendar activities={activities} />
       </div>
 
       {/* Activity Form Dialog */}
