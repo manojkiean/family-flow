@@ -6,6 +6,7 @@ import { ActivityCard } from '@/components/dashboard/ActivityCard';
 import { FamilyMemberCard } from '@/components/dashboard/FamilyMemberCard';
 import { UpcomingSection } from '@/components/dashboard/UpcomingSection';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
 import { ActivityForm } from '@/components/activities/ActivityForm';
 import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
 import { Activity, ActivityCategory } from '@/types/family';
@@ -173,6 +174,9 @@ const Index = () => {
             trend={{ value: 5, positive: true }}
           />
         </div>
+
+        {/* Calendar Widget */}
+        <DashboardCalendar activities={activities} />
 
         {/* Quick Actions */}
         <QuickActions onAddActivity={handleOpenForm} />

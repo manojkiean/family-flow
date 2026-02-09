@@ -1,14 +1,29 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
-import { FamilyMember, Activity } from '@/types/family';
+import { FamilyMember } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Settings, ChevronRight, Crown, Star, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, Settings, ChevronRight, Crown, Star, Loader2, Save, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const FamilyPage = () => {
-  const { familyMembers, loading: membersLoading } = useFamilyMembers();
+  const navigate = useNavigate();
+  const { familyMembers, loading: membersLoading, updateMember } = useFamilyMembers();
   const { activities, loading: activitiesLoading } = useActivities();
+  const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editAvatar, setEditAvatar] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const loading = membersLoading || activitiesLoading;
 
@@ -21,6 +36,30 @@ const FamilyPage = () => {
       completed: memberActivities.filter(a => a.completed).length,
       pending: memberActivities.filter(a => !a.completed).length,
     };
+  };
+
+  const openEditDialog = (member: FamilyMember) => {
+    setEditingMember(member);
+    setEditName(member.name);
+    setEditAvatar(member.avatar || '👤');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingMember) return;
+    setSaving(true);
+    try {
+      await updateMember(editingMember.id, { name: editName, avatar: editAvatar });
+      toast({ title: "Updated", description: `${editName} has been updated.` });
+      setEditingMember(null);
+    } catch {
+      toast({ title: "Error", description: "Failed to update member", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleViewActivities = (memberId: string) => {
+    navigate(`/activities?member=${memberId}`);
   };
 
   const parents = familyMembers.filter(m => m.role === 'parent');
@@ -110,7 +149,12 @@ const FamilyPage = () => {
                       </div>
                     </div>
 
-                    <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => openEditDialog(member)}
+                    >
                       <Settings className="h-5 w-5" />
                     </Button>
                   </div>
@@ -148,12 +192,20 @@ const FamilyPage = () => {
                       >
                         {member.avatar}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-display font-bold text-lg">{member.name}</h3>
                         <Badge variant="outline" className="capitalize text-xs">
                           {member.role}
                         </Badge>
                       </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => openEditDialog(member)}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
                     </div>
 
                     <div className="flex gap-4 mb-4">
@@ -167,7 +219,12 @@ const FamilyPage = () => {
                       </div>
                     </div>
 
-                    <Button variant="ghost" size="sm" className="w-full justify-between">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full justify-between"
+                      onClick={() => handleViewActivities(member.id)}
+                    >
                       View Activities
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -203,6 +260,43 @@ const FamilyPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Member Dialog */}
+      <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMember(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">Edit Family Member</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Avatar Emoji</label>
+              <Input
+                value={editAvatar}
+                onChange={(e) => setEditAvatar(e.target.value)}
+                className="bg-muted/50 border-0 text-2xl text-center"
+                maxLength={4}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Name</label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="bg-muted/50 border-0"
+              />
+            </div>
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="outline" onClick={() => setEditingMember(null)}>
+                Cancel
+              </Button>
+              <Button className="gradient-warm" onClick={handleSaveEdit} disabled={saving || !editName.trim()}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                Save
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };

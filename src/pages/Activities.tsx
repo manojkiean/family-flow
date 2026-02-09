@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ActivityCard } from '@/components/dashboard/ActivityCard';
 import { ActivityForm } from '@/components/activities/ActivityForm';
@@ -20,6 +21,8 @@ const categories: { value: ActivityCategory | 'all'; label: string }[] = [
 ];
 
 const ActivitiesPage = () => {
+  const [searchParams] = useSearchParams();
+  const memberFilter = searchParams.get('member');
   const { familyMembers, loading: membersLoading } = useFamilyMembers();
   const { activities, loading: activitiesLoading, toggleComplete, addActivity, updateActivity } = useActivities();
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,8 +117,9 @@ const ActivitiesPage = () => {
                          activity.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || activity.category === selectedCategory;
     const matchesCompleted = showCompleted || !activity.completed;
+    const matchesMember = !memberFilter || activity.assignedTo.includes(memberFilter) || activity.assignedChildren.includes(memberFilter);
     
-    return matchesSearch && matchesCategory && matchesCompleted;
+    return matchesSearch && matchesCategory && matchesCompleted && matchesMember;
   });
 
   const pendingCount = activities.filter(a => !a.completed).length;
