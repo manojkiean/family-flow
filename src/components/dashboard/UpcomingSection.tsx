@@ -12,18 +12,14 @@ interface UpcomingSectionProps {
 
 export function UpcomingSection({ activities, familyMembers, onToggleComplete }: UpcomingSectionProps) {
   const navigate = useNavigate();
-  // Get tomorrow's activities
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  
-  const dayAfter = new Date(tomorrow);
-  dayAfter.setDate(dayAfter.getDate() + 1);
+  // Get upcoming activities (future, not today)
+  const now = new Date();
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
 
-  const upcomingActivities = activities.filter(a => {
-    const activityDate = new Date(a.startTime);
-    return activityDate >= tomorrow && activityDate < dayAfter;
-  });
+  const upcomingActivities = activities
+    .filter(a => new Date(a.startTime) > todayEnd)
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
@@ -38,7 +34,11 @@ export function UpcomingSection({ activities, familyMembers, onToggleComplete }:
           </div>
           <div>
             <h3 className="font-display font-semibold text-lg">Upcoming</h3>
-            <p className="text-sm text-muted-foreground">{formatDate(tomorrow)}</p>
+            <p className="text-sm text-muted-foreground">
+              {upcomingActivities.length > 0 
+                ? formatDate(new Date(upcomingActivities[0].startTime))
+                : 'Nothing scheduled'}
+            </p>
           </div>
         </div>
         <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/calendar')}>
