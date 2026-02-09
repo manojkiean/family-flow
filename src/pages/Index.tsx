@@ -209,6 +209,9 @@ const Index = () => {
                 </div>
               )}
             </div>
+
+            {/* Calendar Widget */}
+            <DashboardCalendar activities={activities} />
           </div>
 
           {/* Right Column */}
@@ -238,13 +241,6 @@ const Index = () => {
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Calendar Widget - same width as Today's Schedule (2/3 columns) */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <DashboardCalendar activities={activities} />
           </div>
         </div>
       </div>
