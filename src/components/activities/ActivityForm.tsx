@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -90,20 +90,7 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
   
   const form = useForm<ActivityFormData>({
     resolver: zodResolver(activitySchema),
-    defaultValues: activity ? {
-      title: activity.title,
-      description: activity.description || '',
-      category: activity.category,
-      date: new Date(activity.startTime),
-      startTime: format(new Date(activity.startTime), 'HH:mm'),
-      endTime: activity.endTime ? format(new Date(activity.endTime), 'HH:mm') : '',
-      recurrence: activity.recurrence,
-      assignedTo: activity.assignedTo,
-      assignedChildren: activity.assignedChildren,
-      location: activity.location || '',
-      priority: activity.priority,
-      notes: activity.notes || '',
-    } : {
+    defaultValues: {
       title: '',
       description: '',
       category: 'home',
@@ -118,6 +105,46 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
       notes: '',
     },
   });
+
+  // Reset form when activity changes (for edit mode)
+  useState(() => {
+    // intentionally empty - we use useEffect below
+  });
+
+  // biome-ignore lint: reset form when activity or open state changes
+  React.useEffect(() => {
+    if (open && activity) {
+      form.reset({
+        title: activity.title,
+        description: activity.description || '',
+        category: activity.category,
+        date: new Date(activity.startTime),
+        startTime: format(new Date(activity.startTime), 'HH:mm'),
+        endTime: activity.endTime ? format(new Date(activity.endTime), 'HH:mm') : '',
+        recurrence: activity.recurrence,
+        assignedTo: activity.assignedTo,
+        assignedChildren: activity.assignedChildren,
+        location: activity.location || '',
+        priority: activity.priority,
+        notes: activity.notes || '',
+      });
+    } else if (open && !activity) {
+      form.reset({
+        title: '',
+        description: '',
+        category: 'home',
+        date: new Date(),
+        startTime: '09:00',
+        endTime: '',
+        recurrence: 'once',
+        assignedTo: [],
+        assignedChildren: [],
+        location: '',
+        priority: 'medium',
+        notes: '',
+      });
+    }
+  }, [open, activity]);
 
   const handleSubmit = (data: ActivityFormData) => {
     onSubmit(data);

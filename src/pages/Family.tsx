@@ -18,12 +18,17 @@ import {
 
 const FamilyPage = () => {
   const navigate = useNavigate();
-  const { familyMembers, loading: membersLoading, updateMember } = useFamilyMembers();
+  const { familyMembers, loading: membersLoading, updateMember, addMember } = useFamilyMembers();
   const { activities, loading: activitiesLoading } = useActivities();
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
   const [editName, setEditName] = useState('');
   const [editAvatar, setEditAvatar] = useState('');
   const [saving, setSaving] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newAvatar, setNewAvatar] = useState('👤');
+  const [newRole, setNewRole] = useState<'parent' | 'child'>('child');
+  const [adding, setAdding] = useState(false);
 
   const loading = membersLoading || activitiesLoading;
 
@@ -58,6 +63,23 @@ const FamilyPage = () => {
     }
   };
 
+  const handleAddMember = async () => {
+    if (!newName.trim()) return;
+    setAdding(true);
+    try {
+      await addMember({ name: newName, role: newRole, avatar: newAvatar, color: `hsl(${Math.floor(Math.random() * 360)} 60% 50%)` });
+      toast({ title: "Member Added", description: `${newName} has been added to the family.` });
+      setAddDialogOpen(false);
+      setNewName('');
+      setNewAvatar('👤');
+      setNewRole('child');
+    } catch {
+      toast({ title: "Error", description: "Failed to add member", variant: "destructive" });
+    } finally {
+      setAdding(false);
+    }
+  };
+
   const handleViewActivities = (memberId: string) => {
     navigate(`/activities?member=${memberId}`);
   };
@@ -87,7 +109,7 @@ const FamilyPage = () => {
             </p>
           </div>
 
-          <Button className="gradient-warm shadow-soft">
+          <Button className="gradient-warm shadow-soft" onClick={() => setAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Member
           </Button>
@@ -292,6 +314,67 @@ const FamilyPage = () => {
               <Button className="gradient-warm" onClick={handleSaveEdit} disabled={saving || !editName.trim()}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                 Save
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Member Dialog */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">Add Family Member</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Avatar Emoji</label>
+              <Input
+                value={newAvatar}
+                onChange={(e) => setNewAvatar(e.target.value)}
+                className="bg-muted/50 border-0 text-2xl text-center"
+                maxLength={4}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Name</label>
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="bg-muted/50 border-0"
+                placeholder="Enter name"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Role</label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={newRole === 'parent' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setNewRole('parent')}
+                  className={cn(newRole === 'parent' && 'gradient-warm border-0')}
+                >
+                  <Crown className="h-4 w-4 mr-1" /> Parent
+                </Button>
+                <Button
+                  type="button"
+                  variant={newRole === 'child' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setNewRole('child')}
+                  className={cn(newRole === 'child' && 'gradient-warm border-0')}
+                >
+                  <Star className="h-4 w-4 mr-1" /> Child
+                </Button>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button className="gradient-warm" onClick={handleAddMember} disabled={adding || !newName.trim()}>
+                {adding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                Add Member
               </Button>
             </div>
           </div>

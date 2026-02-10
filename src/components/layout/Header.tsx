@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Menu, Bell, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
+  const navigate = useNavigate();
   const today = new Date();
   const formattedDate = today.toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -47,7 +49,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" className="relative" onClick={() => navigate('/activities')}>
             <Bell className="h-5 w-5" />
             <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs gradient-warm border-0">
               3
@@ -55,7 +57,10 @@ export function Header({ onMenuClick }: HeaderProps) {
           </Button>
 
           {/* User Avatar */}
-          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all">
+          <div 
+            className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+            onClick={() => navigate('/settings')}
+          >
             <span className="text-lg">👩</span>
           </div>
         </div>

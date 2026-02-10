@@ -13,12 +13,12 @@ interface ActivityCardProps {
   compact?: boolean;
 }
 
-const categoryStyles: Record<ActivityCategory, { bg: string; text: string; label: string }> = {
-  school: { bg: 'category-school-soft', text: 'text-category-school', label: 'School' },
-  sports: { bg: 'category-sports-soft', text: 'text-category-sports', label: 'Sports' },
-  health: { bg: 'category-health-soft', text: 'text-category-health', label: 'Health' },
-  home: { bg: 'category-home-soft', text: 'text-category-home', label: 'Home' },
-  personal: { bg: 'category-personal-soft', text: 'text-category-personal', label: 'Personal' },
+const categoryStyles: Record<ActivityCategory, { bg: string; text: string; label: string; emoji: string }> = {
+  school: { bg: 'category-school-soft', text: 'text-category-school', label: 'School', emoji: '🎓' },
+  sports: { bg: 'category-sports-soft', text: 'text-category-sports', label: 'Sports', emoji: '⚽' },
+  health: { bg: 'category-health-soft', text: 'text-category-health', label: 'Health', emoji: '🏥' },
+  home: { bg: 'category-home-soft', text: 'text-category-home', label: 'Home', emoji: '🏠' },
+  personal: { bg: 'category-personal-soft', text: 'text-category-personal', label: 'Personal', emoji: '👤' },
 };
 
 export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit, compact }: ActivityCardProps) {
@@ -104,9 +104,10 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <Badge className={cn(style.bg, style.text, "border-0 font-medium text-xs")}>
-                {style.label}
-              </Badge>
+              <span className={cn("flex items-center gap-1.5 text-sm font-medium", style.text)}>
+                <span>{style.emoji}</span>
+                <span>{style.label}</span>
+              </span>
               {activity.priority === 'high' && (
                 <Badge variant="destructive" className="text-xs">
                   High Priority
