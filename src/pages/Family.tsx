@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
+import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { FamilyMember } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ const FamilyPage = () => {
   const navigate = useNavigate();
   const { familyMembers, loading: membersLoading, updateMember, addMember } = useFamilyMembers();
   const { activities, loading: activitiesLoading } = useActivities();
+  const { permissions } = useActiveMember();
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
   const [editName, setEditName] = useState('');
   const [editAvatar, setEditAvatar] = useState('');
@@ -109,10 +111,12 @@ const FamilyPage = () => {
             </p>
           </div>
 
-          <Button className="gradient-warm shadow-soft" onClick={() => setAddDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Member
-          </Button>
+          {permissions.canManageMembers && (
+            <Button className="gradient-warm shadow-soft" onClick={() => setAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Member
+            </Button>
+          )}
         </div>
 
         {/* Parents Section */}
@@ -171,14 +175,16 @@ const FamilyPage = () => {
                       </div>
                     </div>
 
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => openEditDialog(member)}
-                    >
-                      <Settings className="h-5 w-5" />
-                    </Button>
+                    {permissions.canManageMembers && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => openEditDialog(member)}
+                      >
+                        <Settings className="h-5 w-5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
@@ -220,14 +226,16 @@ const FamilyPage = () => {
                           {member.role}
                         </Badge>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => openEditDialog(member)}
-                      >
-                        <Settings className="h-4 w-4" />
-                      </Button>
+                      {permissions.canManageMembers && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => openEditDialog(member)}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
 
                     <div className="flex gap-4 mb-4">

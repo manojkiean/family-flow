@@ -9,6 +9,7 @@ import { QuickActions } from '@/components/dashboard/QuickActions';
 import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
 import { ActivityForm } from '@/components/activities/ActivityForm';
 import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
+import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { Activity, ActivityCategory } from '@/types/family';
 import { toast } from '@/hooks/use-toast';
 import { 
@@ -28,7 +29,7 @@ const Index = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ActivityCategory | undefined>();
   const [editingActivity, setEditingActivity] = useState<Activity | undefined>();
-
+  const { activeMember, permissions } = useActiveMember();
   const loading = membersLoading || activitiesLoading;
 
   const today = new Date();
@@ -115,7 +116,7 @@ const Index = () => {
           priority: data.priority,
           notes: data.notes,
           completed: false,
-          createdBy: familyMembers[0]?.id || '',
+          createdBy: activeMember?.id || familyMembers[0]?.id || '',
         });
         toast({
           title: "Activity Created",
@@ -176,7 +177,7 @@ const Index = () => {
         </div>
 
         {/* Quick Actions */}
-        <QuickActions onAddActivity={handleOpenForm} />
+        {permissions.canCreateActivity && <QuickActions onAddActivity={handleOpenForm} />}
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-6">
@@ -198,7 +199,7 @@ const Index = () => {
                     activity={activity}
                     familyMembers={familyMembers}
                     onToggleComplete={handleToggleComplete}
-                    onEdit={handleEditActivity}
+                    onEdit={permissions.canEditActivity ? handleEditActivity : undefined}
                   />
                 ))
               ) : (

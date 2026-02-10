@@ -3,6 +3,7 @@ import { Menu, Bell, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { MemberPicker } from './MemberPicker';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -56,13 +57,8 @@ export function Header({ onMenuClick }: HeaderProps) {
             </Badge>
           </Button>
 
-          {/* User Avatar */}
-          <div 
-            className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-            onClick={() => navigate('/settings')}
-          >
-            <span className="text-lg">👩</span>
-          </div>
+          {/* Member Picker */}
+          <MemberPicker />
         </div>
       </div>
     </header>
