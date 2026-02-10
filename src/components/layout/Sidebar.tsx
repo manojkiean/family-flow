@@ -10,6 +10,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useFamilyMembers } from '@/hooks/useDatabase';
+import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -30,6 +31,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { familyMembers, loading: membersLoading } = useFamilyMembers();
+  const { permissions } = useActiveMember();
 
   return (
     <>
@@ -70,18 +72,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
 
           {/* Add Activity Button */}
-          <div className="p-4">
-            <Button 
-              className="w-full gradient-warm hover:opacity-90 transition-opacity shadow-soft"
-              onClick={() => {
-                navigate('/activities');
-                onClose();
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Activity
-            </Button>
-          </div>
+          {permissions.canCreateActivity && (
+            <div className="p-4">
+              <Button 
+                className="w-full gradient-warm hover:opacity-90 transition-opacity shadow-soft"
+                onClick={() => {
+                  navigate('/activities');
+                  onClose();
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Activity
+              </Button>
+            </div>
+          )}
 
           {/* Navigation */}
           <nav className="flex-1 px-3 py-2">

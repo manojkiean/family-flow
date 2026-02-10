@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { ActivityCard } from '@/components/dashboard/ActivityCard';
 import { ActivityForm } from '@/components/activities/ActivityForm';
 import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
+import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { Activity, ActivityCategory } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ const ActivitiesPage = () => {
   const memberFilter = searchParams.get('member');
   const { familyMembers, loading: membersLoading } = useFamilyMembers();
   const { activities, loading: activitiesLoading, toggleComplete, addActivity, updateActivity } = useActivities();
+  const { activeMember, permissions } = useActiveMember();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ActivityCategory | 'all'>('all');
   const [showCompleted, setShowCompleted] = useState(true);
@@ -34,6 +36,14 @@ const ActivitiesPage = () => {
   const loading = membersLoading || activitiesLoading;
 
   const handleToggleComplete = async (id: string) => {
+    // Children can only complete their own tasks
+    if (!permissions.canEditActivity) {
+      const activity = activities.find(a => a.id === id);
+      if (!activity || !(activity.assignedTo.includes(activeMember?.id || '') || activity.assignedChildren.includes(activeMember?.id || ''))) {
+        toast({ title: "Permission Denied", description: "You can only complete tasks assigned to you.", variant: "destructive" });
+        return;
+      }
+    }
     try {
       await toggleComplete(id);
     } catch (err) {
@@ -112,7 +122,15 @@ const ActivitiesPage = () => {
     }
   };
 
-  const filteredActivities = activities.filter(activity => {
+  // Children only see activities assigned to them
+  const visibleActivities = permissions.canViewAllActivities
+    ? activities
+    : activities.filter(a => 
+        a.assignedTo.includes(activeMember?.id || '') || 
+        a.assignedChildren.includes(activeMember?.id || '')
+      );
+
+  const filteredActivities = visibleActivities.filter(activity => {
     const matchesSearch = activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          activity.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || activity.category === selectedCategory;
@@ -147,16 +165,18 @@ const ActivitiesPage = () => {
             </p>
           </div>
 
-          <Button 
-            className="gradient-warm shadow-soft"
-            onClick={() => {
-              setEditingActivity(undefined);
-              setFormOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Activity
-          </Button>
+          {permissions.canCreateActivity && (
+            <Button 
+              className="gradient-warm shadow-soft"
+              onClick={() => {
+                setEditingActivity(undefined);
+                setFormOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Activity
+            </Button>
+          )}
         </div>
 
         {/* Filters */}
@@ -212,7 +232,7 @@ const ActivitiesPage = () => {
                 activity={activity}
                 familyMembers={familyMembers}
                 onToggleComplete={handleToggleComplete}
-                onEdit={handleEditActivity}
+                onEdit={permissions.canEditActivity ? handleEditActivity : undefined}
               />
             ))
           ) : (
