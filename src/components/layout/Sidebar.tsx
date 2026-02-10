@@ -6,8 +6,10 @@ import {
   ClipboardList, 
   Settings,
   Plus,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
+import { useFamilyMembers } from '@/hooks/useDatabase';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -27,6 +29,7 @@ const navItems = [
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { familyMembers, loading: membersLoading } = useFamilyMembers();
 
   return (
     <>
@@ -112,14 +115,23 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="p-4 border-t border-border">
             <p className="text-xs font-medium text-muted-foreground mb-3">FAMILY MEMBERS</p>
             <div className="flex gap-2">
-              {['👩', '👨', '👧', '👦'].map((avatar, idx) => (
-                <div 
-                  key={idx}
-                  className="w-9 h-9 rounded-full bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                >
-                  <span className="text-lg">{avatar}</span>
-                </div>
-              ))}
+              {membersLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              ) : (
+                familyMembers.map((member) => (
+                  <div 
+                    key={member.id}
+                    className="w-9 h-9 rounded-full bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                    title={member.name}
+                    onClick={() => {
+                      navigate(`/activities?member=${member.id}`);
+                      onClose();
+                    }}
+                  >
+                    <span className="text-lg">{member.avatar}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
