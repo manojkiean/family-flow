@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,12 +12,33 @@ import Activities from "./pages/Activities";
 import Family from "./pages/Family";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Onboarding from "./pages/Onboarding";
+import { Loader2 } from 'lucide-react';
 
 const queryClient = new QueryClient();
 
 function AppWithProvider() {
-  const { familyMembers } = useFamilyMembers();
-  
+  const { familyMembers, loading, refetch } = useFamilyMembers();
+  const [setupComplete, setSetupComplete] = useState(false);
+
+  const handleOnboardingComplete = useCallback(() => {
+    setSetupComplete(true);
+    refetch();
+  }, [refetch]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show onboarding when no family members exist
+  if (familyMembers.length === 0 && !setupComplete) {
+    return <Onboarding onComplete={handleOnboardingComplete} />;
+  }
+
   return (
     <ActiveMemberProvider familyMembers={familyMembers}>
       <Routes>
