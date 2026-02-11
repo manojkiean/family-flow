@@ -32,6 +32,7 @@ export type Database = {
           start_time: string
           title: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           assigned_children?: string[]
@@ -50,6 +51,7 @@ export type Database = {
           start_time: string
           title: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           assigned_children?: string[]
@@ -68,6 +70,7 @@ export type Database = {
           start_time?: string
           title?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -79,6 +82,7 @@ export type Database = {
           id: string
           name: string
           role: string
+          user_id: string | null
         }
         Insert: {
           avatar?: string
@@ -87,6 +91,7 @@ export type Database = {
           id?: string
           name: string
           role?: string
+          user_id?: string | null
         }
         Update: {
           avatar?: string
@@ -95,6 +100,31 @@ export type Database = {
           id?: string
           name?: string
           role?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          family_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          family_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          family_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

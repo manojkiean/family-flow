@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ActiveMemberProvider } from "@/contexts/ActiveMemberContext";
 import { useFamilyMembers } from "@/hooks/useDatabase";
+import { useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Calendar from "./pages/Calendar";
 import Activities from "./pages/Activities";
@@ -13,11 +14,30 @@ import Family from "./pages/Family";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
+import Auth from "./pages/Auth";
 import { Loader2 } from 'lucide-react';
 
 const queryClient = new QueryClient();
 
-function AppWithProvider() {
+function AppWithAuth() {
+  const { user, loading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth />;
+  }
+
+  return <AuthenticatedApp />;
+}
+
+function AuthenticatedApp() {
   const { familyMembers, loading, refetch } = useFamilyMembers();
   const [setupComplete, setSetupComplete] = useState(false);
 
@@ -34,7 +54,6 @@ function AppWithProvider() {
     );
   }
 
-  // Show onboarding when no family members exist
   if (familyMembers.length === 0 && !setupComplete) {
     return <Onboarding onComplete={handleOnboardingComplete} />;
   }
@@ -59,7 +78,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppWithProvider />
+        <AppWithAuth />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
