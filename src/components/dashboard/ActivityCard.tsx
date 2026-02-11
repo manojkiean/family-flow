@@ -85,24 +85,9 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
       {/* Category indicator */}
       <div className={cn("absolute top-0 left-0 w-1 h-full", style.bg.replace('-soft', ''))} />
 
-      {/* Edit button */}
-      {onEdit && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(activity);
-          }}
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
-      )}
-
       <div className="pl-3">
         <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className={cn("flex items-center gap-1.5 text-sm font-medium", style.text)}>
                 <span>{style.emoji}</span>
@@ -122,12 +107,27 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
             </h3>
           </div>
           
-          <Checkbox 
-            checked={activity.completed}
-            onCheckedChange={() => onToggleComplete?.(activity.id)}
-            onClick={(e) => e.stopPropagation()}
-            className="h-6 w-6"
-          />
+          <div className="flex items-center gap-2 shrink-0 ml-2">
+            <Checkbox 
+              checked={activity.completed}
+              onCheckedChange={() => onToggleComplete?.(activity.id)}
+              onClick={(e) => e.stopPropagation()}
+              className="h-6 w-6"
+            />
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(activity);
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
         {activity.description && (
@@ -152,30 +152,26 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
         </div>
 
         {/* Assigned people */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-muted-foreground">Assigned:</span>
-            <div className="flex -space-x-2">
-              {assignedMembers.map(member => (
-                <div 
-                  key={member.id}
-                  className="w-7 h-7 rounded-full bg-muted border-2 border-card flex items-center justify-center"
-                  title={member.name}
-                >
-                  <span className="text-sm">{member.avatar}</span>
-                </div>
-              ))}
-            </div>
+            {assignedMembers.map(member => (
+              <div key={member.id} className="flex items-center gap-1.5 bg-muted/50 rounded-full px-2 py-0.5">
+                <span className="text-sm">{member.avatar}</span>
+                <span className="text-xs font-medium">{member.name}</span>
+              </div>
+            ))}
           </div>
 
           {children.length > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-muted-foreground">For:</span>
-              <div className="flex gap-1">
-                {children.map(child => (
-                  <span key={child.id} className="text-sm">{child.avatar}</span>
-                ))}
-              </div>
+              {children.map(child => (
+                <div key={child.id} className="flex items-center gap-1.5 bg-muted/50 rounded-full px-2 py-0.5">
+                  <span className="text-sm">{child.avatar}</span>
+                  <span className="text-xs font-medium">{child.name}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
