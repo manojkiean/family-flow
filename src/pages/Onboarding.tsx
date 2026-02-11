@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useFamilyMembers } from '@/hooks/useDatabase';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,7 @@ interface MemberDraft {
 
 const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
   const { addMember } = useFamilyMembers();
+  const { user } = useAuth();
   const [step, setStep] = useState<'welcome' | 'members'>('welcome');
   const [familyName, setFamilyName] = useState('');
   const [members, setMembers] = useState<MemberDraft[]>([
@@ -53,6 +55,13 @@ const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
 
     setSaving(true);
     try {
+      // Create profile with family name
+      if (user) {
+        await supabase.from('profiles').insert({
+          user_id: user.id,
+          family_name: familyName.trim(),
+        });
+      }
       for (const member of members) {
         await addMember({
           name: member.name.trim(),

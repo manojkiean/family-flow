@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FamilyMember, Activity, ActivityCategory, RecurrenceType, Priority, UserRole } from '@/types/family';
+import { useAuth } from '@/hooks/useAuth';
 
 // DB row types
 interface FamilyMemberRow {
@@ -64,6 +65,7 @@ export function useFamilyMembers() {
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const fetchMembers = useCallback(async () => {
     try {
@@ -84,16 +86,17 @@ export function useFamilyMembers() {
   }, []);
 
   const addMember = useCallback(async (member: Omit<FamilyMember, 'id'>) => {
+    if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('family_members')
-      .insert({ name: member.name, role: member.role, avatar: member.avatar, color: member.color })
+      .insert({ name: member.name, role: member.role, avatar: member.avatar, color: member.color, user_id: user.id })
       .select()
       .single();
     if (error) throw error;
     const newMember = toFamilyMember(data as unknown as FamilyMemberRow);
     setFamilyMembers(prev => [...prev, newMember]);
     return newMember;
-  }, []);
+  }, [user]);
 
   const updateMember = useCallback(async (id: string, updates: Partial<FamilyMember>) => {
     const { data, error } = await supabase
@@ -142,7 +145,10 @@ export function useActivities() {
     }
   }, []);
 
+  const { user } = useAuth();
+
   const addActivity = useCallback(async (activity: Omit<Activity, 'id'>) => {
+    if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('activities')
       .insert({
@@ -159,6 +165,7 @@ export function useActivities() {
         priority: activity.priority,
         completed: activity.completed,
         created_by: activity.createdBy,
+        user_id: user.id,
       })
       .select()
       .single();
@@ -166,7 +173,7 @@ export function useActivities() {
     const newActivity = toActivity(data as unknown as ActivityRow);
     setActivities(prev => [...prev, newActivity]);
     return newActivity;
-  }, []);
+  }, [user]);
 
   const updateActivity = useCallback(async (id: string, updates: Partial<Activity>) => {
     const fields: Record<string, unknown> = {};

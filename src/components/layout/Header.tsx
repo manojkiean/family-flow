@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { Menu, Bell, Search } from 'lucide-react';
+import { Menu, Bell, Search, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { MemberPicker } from './MemberPicker';
+import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const today = new Date();
   const formattedDate = today.toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -59,6 +61,11 @@ export function Header({ onMenuClick }: HeaderProps) {
 
           {/* Member Picker */}
           <MemberPicker />
+
+          {/* Sign Out */}
+          <Button variant="ghost" size="icon" onClick={signOut} title="Sign out">
+            <LogOut className="h-5 w-5" />
+          </Button>
         </div>
       </div>
     </header>
