@@ -1,21 +1,65 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Bell, 
-  Clock, 
-  Globe, 
-  Palette, 
-  Shield, 
+import {
+  Bell,
+  Clock,
+  Globe,
+  Palette,
+  Shield,
   Smartphone,
   Mail,
   Save
 } from 'lucide-react';
 
 const SettingsPage = () => {
+  const { user } = useAuth();
+  const [familyName, setFamilyName] = useState('FamilyHub');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.id) {
+      supabase
+        .from('profiles')
+        .select('name, family_name')
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (!error && (data?.name || data?.family_name)) {
+            setFamilyName(data.name || data.family_name || '');
+          }
+          setLoading(false);
+        });
+    }
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          family_name: familyName,
+          name: familyName
+        });
+
+      if (error) throw error;
+      toast({ title: 'Settings saved', description: 'Your family preferences have been updated.' });
+    } catch (err) {
+      console.error('Save error:', err);
+      toast({ title: 'Error', description: 'Failed to save settings.', variant: 'destructive' });
+    }
+  };
+
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
@@ -97,8 +141,13 @@ const SettingsPage = () => {
           <div className="space-y-4">
             <div className="grid gap-2">
               <Label>Family Name</Label>
-              <Input defaultValue="The Johnson Family" className="bg-muted/50 border-0" />
+              <Input
+                value={familyName}
+                onChange={(e) => setFamilyName(e.target.value)}
+                className="bg-muted/50 border-0"
+              />
             </div>
+            {/* ... rest of the section ... */}
 
             <div className="grid gap-2">
               <Label>Time Zone</Label>
@@ -160,7 +209,7 @@ const SettingsPage = () => {
 
         {/* Save Button */}
         <div className="flex justify-end">
-          <Button className="gradient-warm shadow-soft">
+          <Button className="gradient-warm shadow-soft" onClick={handleSave}>
             <Save className="h-4 w-4 mr-2" />
             Save Changes
           </Button>

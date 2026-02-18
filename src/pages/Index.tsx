@@ -240,7 +240,7 @@ const Index = () => {
                   Manage
                 </Button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 {familyMembers.map(member => (
                   <FamilyMemberCard
                     key={member.id}

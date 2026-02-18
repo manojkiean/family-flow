@@ -1,5 +1,6 @@
 import { FamilyMember, Activity } from '@/types/family';
 import { cn } from '@/lib/utils';
+import { Crown, Star, CheckCircle2, Clock } from 'lucide-react';
 
 interface FamilyMemberCardProps {
   member: FamilyMember;
@@ -14,42 +15,47 @@ export function FamilyMemberCard({ member, activities, onClick }: FamilyMemberCa
   const completedCount = memberActivities.filter(a => a.completed).length;
   const pendingCount = memberActivities.filter(a => !a.completed).length;
 
+  const RoleIcon = member.role === 'parent' ? Crown : Star;
+  const iconColor = member.role === 'parent' ? 'text-primary' : 'text-category-home';
+
   return (
-    <div 
+    <div
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-2xl bg-card p-4 cursor-pointer transition-all duration-300",
-        "hover:shadow-elevated hover:-translate-y-1 border border-border/50 hover:border-border"
+        "relative overflow-hidden rounded-xl bg-card p-3 cursor-pointer transition-all duration-300",
+        "border border-border/50 hover:border-border hover:shadow-sm group"
       )}
     >
-      {/* Background gradient based on member color */}
-      <div 
-        className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-10 -translate-y-1/2 translate-x-1/2"
-        style={{ background: member.color }}
-      />
-
-      <div className="relative">
-        <div className="flex items-center gap-3 mb-3">
-          <div 
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-            style={{ backgroundColor: `${member.color}20` }}
+      <div className="relative z-10 flex items-center justify-between gap-4">
+        {/* Name and Role Section */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className={cn(
+              "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm",
+              iconColor,
+              "bg-background border border-border/50 transition-colors group-hover:bg-muted/50"
+            )}
           >
-            {member.avatar}
+            <RoleIcon className="h-4 w-4" />
           </div>
-          <div>
-            <h3 className="font-display font-semibold text-lg">{member.name}</h3>
-            <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
+          <div className="min-w-0">
+            <h4 className="font-display font-semibold text-sm leading-tight truncate">{member.name}</h4>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mt-1">{member.role}</p>
           </div>
         </div>
 
-        <div className="flex gap-4">
-          <div>
-            <p className="text-2xl font-bold text-foreground">{pendingCount}</p>
-            <p className="text-xs text-muted-foreground">Pending</p>
+        {/* Stats Section in One Row */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Pending Stat */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border/20">
+            <Clock className="h-3 w-3 text-muted-foreground" />
+            <span className="text-sm font-bold text-foreground leading-none">{pendingCount}</span>
           </div>
-          <div>
-            <p className="text-2xl font-bold text-accent">{completedCount}</p>
-            <p className="text-xs text-muted-foreground">Done</p>
+
+          {/* Done Stat */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/5 border border-primary/10">
+            <CheckCircle2 className="h-3 w-3 text-primary" />
+            <span className="text-sm font-bold text-primary leading-none">{completedCount}</span>
           </div>
         </div>
       </div>

@@ -15,6 +15,8 @@ import {
   HelpCircle,
   LogOut
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useFamilyMembers } from '@/hooks/useDatabase';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -41,7 +43,23 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
   const navigate = useNavigate();
   const { familyMembers, loading: membersLoading } = useFamilyMembers();
   const { permissions } = useActiveMember();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const [familyName, setFamilyName] = useState<string>('FamilyHub');
+
+  useEffect(() => {
+    if (user?.id) {
+      supabase
+        .from('profiles')
+        .select('name, family_name')
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (!error && (data?.name || data?.family_name)) {
+            setFamilyName(data.name || data.family_name || 'FamilyHub');
+          }
+        });
+    }
+  }, [user]);
 
   return (
     <>
@@ -69,8 +87,7 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
                 <span className="text-xl">👨‍👩‍👧‍👦</span>
               </div>
               <div className={cn(collapsed && "lg:hidden")}>
-                <h1 className="font-display font-bold text-lg text-foreground">FamilyHub</h1>
-                <p className="text-xs text-muted-foreground">Activity Tracker</p>
+                <h1 className="font-display font-bold text-lg text-foreground line-clamp-1">{familyName}</h1>
               </div>
             </div>
 
@@ -121,7 +138,7 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
           )}
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 py-2">
+          <nav className="px-3 py-2">
             <ul className="space-y-1">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
@@ -202,7 +219,7 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
                 )}
                 title="FAQ"
                 onClick={() => {
-                  navigate('/settings');
+                  navigate('/faq');
                   onClose();
                 }}
               >

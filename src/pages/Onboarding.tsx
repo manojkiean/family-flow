@@ -60,6 +60,7 @@ const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
         await supabase.from('profiles').insert({
           user_id: user.id,
           family_name: familyName.trim(),
+          name: familyName.trim(),
         });
       }
       for (const member of members) {

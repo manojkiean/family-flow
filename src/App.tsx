@@ -12,6 +12,7 @@ import Calendar from "./pages/Calendar";
 import Activities from "./pages/Activities";
 import Family from "./pages/Family";
 import Settings from "./pages/Settings";
+import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import Auth from "./pages/Auth";
@@ -66,6 +67,7 @@ function AuthenticatedApp() {
         <Route path="/activities" element={<Activities />} />
         <Route path="/family" element={<Family />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/faq" element={<FAQ />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </ActiveMemberProvider>
