@@ -12,10 +12,10 @@ import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { Activity, ActivityCategory } from '@/types/family';
 import { toast } from '@/hooks/use-toast';
-import { 
-  CheckCircle2, 
-  Clock, 
-  Users, 
+import {
+  CheckCircle2,
+  Clock,
+  Users,
   TrendingUp,
   ChevronRight,
   Loader2
@@ -32,13 +32,20 @@ const Index = () => {
   const { activeMember, permissions } = useActiveMember();
   const loading = membersLoading || activitiesLoading;
 
+  // Role-based activity filtering: children see only their own activities
+  const visibleActivities = activities.filter(a => {
+    if (permissions.canViewAllActivities) return true;
+    if (!activeMember) return false;
+    return a.assignedTo.includes(activeMember.id) || a.assignedChildren.includes(activeMember.id);
+  });
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  // Today's activities
-  const todayActivities = activities.filter(a => {
+  // Today's activities (filtered by role)
+  const todayActivities = visibleActivities.filter(a => {
     const activityDate = new Date(a.startTime);
     activityDate.setHours(0, 0, 0, 0);
     return activityDate.getTime() === today.getTime();
@@ -46,6 +53,7 @@ const Index = () => {
 
   const completedToday = todayActivities.filter(a => a.completed).length;
   const pendingToday = todayActivities.filter(a => !a.completed).length;
+  const totalCompleted = visibleActivities.filter(a => a.completed).length;
 
   const handleToggleComplete = async (id: string) => {
     try {
@@ -156,8 +164,8 @@ const Index = () => {
           />
           <StatsCard
             title="Completed"
-            value={completedToday}
-            subtitle="Today"
+            value={totalCompleted}
+            subtitle="Total"
             icon={CheckCircle2}
             trend={{ value: 12, positive: true }}
           />
@@ -169,8 +177,8 @@ const Index = () => {
           />
           <StatsCard
             title="Completion Rate"
-            value={`${todayActivities.length > 0 ? Math.round((completedToday / todayActivities.length) * 100) : 0}%`}
-            subtitle="This week"
+            value={`${visibleActivities.length > 0 ? Math.round((totalCompleted / visibleActivities.length) * 100) : 0}%`}
+            subtitle="Overall"
             icon={TrendingUp}
             trend={{ value: 5, positive: true }}
           />
@@ -212,14 +220,14 @@ const Index = () => {
             </div>
 
             {/* Calendar Widget */}
-            <DashboardCalendar activities={activities} />
+            <DashboardCalendar activities={visibleActivities} />
           </div>
 
           {/* Right Column */}
           <div className="space-y-6">
             {/* Upcoming */}
-            <UpcomingSection 
-              activities={activities}
+            <UpcomingSection
+              activities={visibleActivities}
               familyMembers={familyMembers}
               onToggleComplete={handleToggleComplete}
             />

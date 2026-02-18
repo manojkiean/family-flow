@@ -34,11 +34,6 @@ export function UpcomingSection({ activities, familyMembers, onToggleComplete }:
           </div>
           <div>
             <h3 className="font-display font-semibold text-lg">Upcoming</h3>
-            <p className="text-sm text-muted-foreground">
-              {upcomingActivities.length > 0 
-                ? formatDate(new Date(upcomingActivities[0].startTime))
-                : 'Nothing scheduled'}
-            </p>
           </div>
         </div>
         <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/calendar')}>

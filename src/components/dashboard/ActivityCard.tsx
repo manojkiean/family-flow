@@ -1,9 +1,17 @@
+import { useState } from 'react';
 import { Activity, FamilyMember, ActivityCategory } from '@/types/family';
-import { Clock, MapPin, Pencil } from 'lucide-react';
+import { Clock, MapPin, Pencil, Paperclip, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -22,6 +30,7 @@ const categoryStyles: Record<ActivityCategory, { bg: string; text: string; label
 };
 
 export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit, compact }: ActivityCardProps) {
+  const [detailOpen, setDetailOpen] = useState(false);
   const style = categoryStyles[activity.category];
   const assignedMembers = familyMembers.filter(m => activity.assignedTo.includes(m.id));
   const children = familyMembers.filter(m => activity.assignedChildren.includes(m.id));
@@ -30,50 +39,137 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   };
 
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  };
+
   if (compact) {
     return (
-      <div className={cn(
-        "flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 transition-all duration-200",
-        "hover:shadow-card hover:border-border",
-        activity.completed && "opacity-60"
-      )}>
-        <Checkbox 
-          checked={activity.completed}
-          onCheckedChange={() => onToggleComplete?.(activity.id)}
-          className="h-5 w-5"
-        />
-        
-        <div className={cn("w-1 h-10 rounded-full", style.bg.replace('-soft', ''))} />
-        
-        <div className="flex-1 min-w-0">
-          <p className={cn(
-            "font-medium truncate",
-            activity.completed && "line-through text-muted-foreground"
-          )}>
-            {activity.title}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {formatTime(activity.startTime)}
-            {activity.endTime && ` - ${formatTime(activity.endTime)}`}
-          </p>
+      <>
+        <div className={cn(
+          "flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 transition-all duration-200",
+          "hover:shadow-card hover:border-border",
+          activity.completed && "opacity-60"
+        )}>
+          <button
+            onClick={() => setDetailOpen(true)}
+            className={cn("p-1.5 rounded-lg transition-colors shrink-0", `hover:${style.bg}`)}
+            title="View details"
+          >
+            <Paperclip className={cn("h-4 w-4", style.text)} />
+          </button>
+
+          <div className={cn("w-1 h-10 rounded-full", style.bg.replace('-soft', ''))} />
+
+          <div className="flex-1 min-w-0">
+            <p className={cn(
+              "font-medium truncate",
+              activity.completed && "line-through text-muted-foreground"
+            )}>
+              {activity.title}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {formatDate(activity.startTime)} · {formatTime(activity.startTime)}
+              {activity.endTime && ` - ${formatTime(activity.endTime)}`}
+            </p>
+          </div>
+
+          <div className="flex -space-x-2">
+            {assignedMembers.slice(0, 2).map(member => (
+              <div
+                key={member.id}
+                className="w-7 h-7 rounded-full bg-muted border-2 border-card flex items-center justify-center"
+              >
+                <span className="text-sm">{member.avatar}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex -space-x-2">
-          {assignedMembers.slice(0, 2).map(member => (
-            <div 
-              key={member.id}
-              className="w-7 h-7 rounded-full bg-muted border-2 border-card flex items-center justify-center"
-            >
-              <span className="text-sm">{member.avatar}</span>
+        {/* Activity Detail Popup */}
+        <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex items-center gap-2 mb-1">
+                <span className={cn("flex items-center gap-1.5 text-sm font-medium", style.text)}>
+                  <span>{style.emoji}</span>
+                  <span>{style.label}</span>
+                </span>
+                {activity.priority === 'high' && (
+                  <Badge variant="destructive" className="text-xs">High Priority</Badge>
+                )}
+              </div>
+              <DialogTitle className="font-display text-xl">{activity.title}</DialogTitle>
+              <DialogDescription>{formatDate(activity.startTime)}</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 pt-2">
+              {activity.description && (
+                <p className="text-sm text-muted-foreground">{activity.description}</p>
+              )}
+
+              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-4 w-4" />
+                  <span>
+                    {formatTime(activity.startTime)}
+                    {activity.endTime && ` - ${formatTime(activity.endTime)}`}
+                  </span>
+                </div>
+                {activity.location && (
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4" />
+                    <span>{activity.location}</span>
+                  </div>
+                )}
+              </div>
+
+              {assignedMembers.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Users className="h-3.5 w-3.5" />
+                    <span>Assigned</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {assignedMembers.map(member => (
+                      <div key={member.id} className="flex items-center gap-1.5 bg-muted/50 rounded-full px-2.5 py-1">
+                        <span className="text-sm">{member.avatar}</span>
+                        <span className="text-xs font-medium">{member.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {children.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-xs text-muted-foreground">For</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {children.map(child => (
+                      <div key={child.id} className="flex items-center gap-1.5 bg-muted/50 rounded-full px-2.5 py-1">
+                        <span className="text-sm">{child.avatar}</span>
+                        <span className="text-xs font-medium">{child.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activity.notes && (
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Notes</span>
+                  <p className="text-sm bg-muted/30 rounded-lg p-3">{activity.notes}</p>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      </div>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
   return (
-    <div 
+    <div
       className={cn(
         "group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-4 transition-all duration-300",
         "hover:shadow-elevated hover:-translate-y-0.5 hover:border-border",
@@ -106,9 +202,9 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
               {activity.title}
             </h3>
           </div>
-          
+
           <div className="flex items-center gap-2 shrink-0 ml-2">
-            <Checkbox 
+            <Checkbox
               checked={activity.completed}
               onCheckedChange={() => onToggleComplete?.(activity.id)}
               onClick={(e) => e.stopPropagation()}
@@ -138,11 +234,11 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
           <div className="flex items-center gap-1.5">
             <Clock className="h-4 w-4" />
             <span>
-              {formatTime(activity.startTime)}
+              {formatDate(activity.startTime)} · {formatTime(activity.startTime)}
               {activity.endTime && ` - ${formatTime(activity.endTime)}`}
             </span>
           </div>
-          
+
           {activity.location && (
             <div className="flex items-center gap-1.5">
               <MapPin className="h-4 w-4" />

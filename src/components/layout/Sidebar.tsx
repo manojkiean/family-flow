@@ -1,22 +1,31 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  Users, 
-  ClipboardList, 
+import {
+  LayoutDashboard,
+  Calendar,
+  Users,
+  ClipboardList,
   Settings,
   Plus,
   X,
-  Loader2
+  Loader2,
+  Crown,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  HelpCircle,
+  LogOut
 } from 'lucide-react';
 import { useFamilyMembers } from '@/hooks/useDatabase';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 const navItems = [
@@ -27,17 +36,18 @@ const navItems = [
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { familyMembers, loading: membersLoading } = useFamilyMembers();
   const { permissions } = useActiveMember();
+  const { signOut } = useAuth();
 
   return (
     <>
       {/* Mobile overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-40 lg:hidden"
           onClick={onClose}
         />
@@ -45,25 +55,44 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed top-0 left-0 h-full w-64 bg-card border-r border-border z-50 transition-transform duration-300 ease-in-out",
+        "fixed top-0 left-0 h-full bg-card border-r border-border z-50 transition-all duration-300 ease-in-out",
         "lg:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full"
+        isOpen ? "translate-x-0" : "-translate-x-full",
+        collapsed ? "lg:w-[72px]" : "lg:w-64",
+        "w-64"
       )}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
+          {/* Logo + Collapse Toggle */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl gradient-warm flex items-center justify-center shadow-soft">
+            <div className={cn("flex items-center gap-2", collapsed && "lg:justify-center")}>
+              <div className="w-10 h-10 rounded-xl gradient-warm flex items-center justify-center shadow-soft shrink-0">
                 <span className="text-xl">👨‍👩‍👧‍👦</span>
               </div>
-              <div>
+              <div className={cn(collapsed && "lg:hidden")}>
                 <h1 className="font-display font-bold text-lg text-foreground">FamilyHub</h1>
                 <p className="text-xs text-muted-foreground">Activity Tracker</p>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+
+            {/* Desktop collapse toggle — sits after FamilyHub title */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden lg:flex h-7 w-7 shrink-0"
+              onClick={onToggleCollapse}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+
+            {/* Mobile close button */}
+            <Button
+              variant="ghost"
+              size="icon"
               className="lg:hidden"
               onClick={onClose}
             >
@@ -74,15 +103,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Add Activity Button */}
           {permissions.canCreateActivity && (
             <div className="p-4">
-              <Button 
-                className="w-full gradient-warm hover:opacity-90 transition-opacity shadow-soft"
+              <Button
+                className={cn(
+                  "w-full gradient-warm hover:opacity-90 transition-opacity shadow-soft",
+                  collapsed && "lg:px-0"
+                )}
                 onClick={() => {
                   navigate('/activities');
                   onClose();
                 }}
+                title="Add Activity"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Activity
+                <Plus className={cn("h-4 w-4", !collapsed && "mr-2")} />
+                <span className={cn(collapsed && "lg:hidden")}>Add Activity</span>
               </Button>
             </div>
           )}
@@ -97,17 +130,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <NavLink
                       to={item.path}
                       onClick={onClose}
+                      title={item.label}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                         "hover:bg-muted",
-                        isActive && "bg-primary/10 text-primary font-medium"
+                        isActive && "bg-primary/10 text-primary font-medium",
+                        collapsed && "lg:justify-center lg:px-2"
                       )}
                     >
                       <item.icon className={cn(
-                        "h-5 w-5",
+                        "h-5 w-5 shrink-0",
                         isActive ? "text-primary" : "text-muted-foreground"
                       )} />
-                      <span>{item.label}</span>
+                      <span className={cn(collapsed && "lg:hidden")}>{item.label}</span>
                     </NavLink>
                   </li>
                 );
@@ -115,27 +150,77 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </ul>
           </nav>
 
-          {/* Family Members Quick Access */}
-          <div className="p-4 border-t border-border">
-            <p className="text-xs font-medium text-muted-foreground mb-3">FAMILY MEMBERS</p>
-            <div className="flex gap-2">
+          {/* Family Members — Crown for parent, Star for child */}
+          <div className="px-3 py-4 border-t border-border">
+            <p className={cn(
+              "text-xs font-medium text-muted-foreground mb-3 px-3",
+              collapsed && "lg:hidden"
+            )}>FAMILY MEMBERS</p>
+            <div className="space-y-1">
               {membersLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <div className={cn("flex items-center gap-3 px-3 py-2", collapsed && "lg:justify-center")}>
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+                </div>
               ) : (
-                familyMembers.map((member) => (
-                  <div 
-                    key={member.id}
-                    className="w-9 h-9 rounded-full bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                    title={member.name}
-                    onClick={() => {
-                      navigate(`/activities?member=${member.id}`);
-                      onClose();
-                    }}
-                  >
-                    <span className="text-lg">{member.avatar}</span>
-                  </div>
-                ))
+                familyMembers.map((member) => {
+                  const RoleIcon = member.role === 'parent' ? Crown : Star;
+                  const iconColor = member.role === 'parent' ? 'text-primary' : 'text-category-home';
+                  return (
+                    <button
+                      key={member.id}
+                      className={cn(
+                        "flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-all duration-200",
+                        "hover:bg-muted text-left",
+                        collapsed && "lg:justify-center lg:px-2"
+                      )}
+                      title={member.name}
+                      onClick={() => {
+                        navigate(`/activities?member=${member.id}`);
+                        onClose();
+                      }}
+                    >
+                      <RoleIcon className={cn("h-4 w-4 shrink-0", iconColor)} />
+                      <span className={cn(
+                        "text-sm font-medium truncate",
+                        collapsed && "lg:hidden"
+                      )}>{member.name}</span>
+                    </button>
+                  );
+                })
               )}
+            </div>
+          </div>
+
+          {/* Bottom actions — FAQ & Sign Out */}
+          <div className="px-3 py-3 border-t border-border">
+            <div className="space-y-1">
+              <button
+                className={cn(
+                  "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all duration-200",
+                  "hover:bg-muted text-left",
+                  collapsed && "lg:justify-center lg:px-2"
+                )}
+                title="FAQ"
+                onClick={() => {
+                  navigate('/settings');
+                  onClose();
+                }}
+              >
+                <HelpCircle className="h-5 w-5 text-muted-foreground shrink-0" />
+                <span className={cn("text-sm", collapsed && "lg:hidden")}>FAQ</span>
+              </button>
+              <button
+                className={cn(
+                  "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all duration-200",
+                  "hover:bg-destructive/10 text-left",
+                  collapsed && "lg:justify-center lg:px-2"
+                )}
+                title="Sign out"
+                onClick={signOut}
+              >
+                <LogOut className="h-5 w-5 text-muted-foreground shrink-0" />
+                <span className={cn("text-sm", collapsed && "lg:hidden")}>Sign Out</span>
+              </button>
             </div>
           </div>
         </div>
