@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { FamilyMember } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Plus, Settings, ChevronRight, Crown, Star, Loader2, Save, X } from 'lucide-react';
+import { Plus, Settings, ChevronRight, Crown, Star, Loader2, Save, X, Upload, User, Trash2, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -19,16 +20,21 @@ import {
 
 const FamilyPage = () => {
   const navigate = useNavigate();
-  const { familyMembers, loading: membersLoading, updateMember, addMember } = useFamilyMembers();
+  const { familyMembers, loading: membersLoading, updateMember, addMember, deleteMember } = useFamilyMembers();
   const { activities, loading: activitiesLoading } = useActivities();
-  const { permissions } = useActiveMember();
+  const { permissions, activeMember } = useActiveMember();
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
   const [editName, setEditName] = useState('');
-  const [editAvatar, setEditAvatar] = useState('');
+  const [editImage, setEditImage] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+
   const [newName, setNewName] = useState('');
-  const [newAvatar, setNewAvatar] = useState('👤');
+  const [newImage, setNewImage] = useState('');
+  const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState<'parent' | 'child'>('child');
   const [adding, setAdding] = useState(false);
 
@@ -48,15 +54,34 @@ const FamilyPage = () => {
   const openEditDialog = (member: FamilyMember) => {
     setEditingMember(member);
     setEditName(member.name);
-    setEditAvatar(member.avatar || '👤');
+    setEditImage(member.image_url || '');
+    setEditEmail(member.email || '');
   };
 
   const handleSaveEdit = async () => {
     if (!editingMember) return;
     setSaving(true);
+    const emailChanged = editEmail !== editingMember.email;
+
     try {
-      await updateMember(editingMember.id, { name: editName, avatar: editAvatar });
-      toast({ title: "Updated", description: `${editName} has been updated.` });
+      await updateMember(editingMember.id, {
+        name: editName,
+        image_url: editImage,
+        email: editEmail,
+      });
+
+      if (emailChanged && editEmail) {
+        // TRIGGER: Send a Magic Login Link immediately to the new email
+        await supabase.auth.signInWithOtp({
+          email: editEmail,
+          options: {
+            emailRedirectTo: window.location.origin,
+          }
+        });
+        toast({ title: "New Invite Sent", description: `A login link has been sent to: ${editEmail}` });
+      } else {
+        toast({ title: "Updated", description: `${editName} has been updated.` });
+      }
       setEditingMember(null);
     } catch {
       toast({ title: "Error", description: "Failed to update member", variant: "destructive" });
@@ -65,20 +90,103 @@ const FamilyPage = () => {
     }
   };
 
+  const handleDeleteMember = async () => {
+    if (!editingMember) return;
+
+    // Safety check: Don't let parent delete themselves from here.
+    if (editingMember.id === activeMember?.id) {
+      toast({ title: "Safety Alert", description: "You cannot delete your own profile from here.", variant: "destructive" });
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to remove ${editingMember.name} from the family? This will not delete their account, but they will lose access to this hub.`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteMember(editingMember.id);
+      toast({ title: "Member Removed", description: `${editingMember.name} has been removed from the family.` });
+      setEditingMember(null);
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to remove member", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleAddMember = async () => {
     if (!newName.trim()) return;
     setAdding(true);
     try {
-      await addMember({ name: newName, role: newRole, avatar: newAvatar, color: `hsl(${Math.floor(Math.random() * 360)} 60% 50%)` });
-      toast({ title: "Member Added", description: `${newName} has been added to the family.` });
+      const newMember = await addMember({
+        name: newName,
+        role: newRole,
+        image_url: newImage,
+        email: newEmail,
+        color: `hsl(${Math.floor(Math.random() * 360)} 60% 50%)`
+      });
+
+      if (newEmail) {
+        // TRIGGER: Send a Magic Login Link immediately
+        await supabase.auth.signInWithOtp({
+          email: newEmail,
+          options: {
+            emailRedirectTo: window.location.origin,
+          }
+        });
+        toast({ title: "Invite Sent", description: `A login link has been sent to ${newEmail}.` });
+      } else {
+        toast({ title: "Member Added", description: `${newName} has been added.` });
+      }
       setAddDialogOpen(false);
-      setNewName('');
-      setNewAvatar('👤');
+      setNewImage('');
+      setNewEmail('');
       setNewRole('child');
     } catch {
       toast({ title: "Error", description: "Failed to add member", variant: "destructive" });
     } finally {
       setAdding(false);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, isEditingForm: boolean) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "Invalid file", description: "Please upload an image file.", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('family-app')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('family-app')
+        .getPublicUrl(filePath);
+
+      if (isEditingForm) {
+        setEditImage(publicUrl);
+      } else {
+        setNewImage(publicUrl);
+      }
+
+      toast({ title: "Success", description: "Image uploaded successfully." });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({ title: "Upload failed", description: "Could not upload image. Make sure the 'family-app' bucket exists.", variant: "destructive" });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -134,17 +242,21 @@ const FamilyPage = () => {
                   key={member.id}
                   className="group relative overflow-hidden bg-card rounded-2xl border border-border/50 p-6 transition-all duration-300 hover:shadow-elevated hover:-translate-y-1"
                 >
-                  <div 
+                  <div
                     className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 -translate-y-1/2 translate-x-1/2"
                     style={{ background: member.color }}
                   />
 
                   <div className="relative flex items-start gap-4">
-                    <div 
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-soft"
+                    <div
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-soft overflow-hidden"
                       style={{ backgroundColor: `${member.color}20` }}
                     >
-                      {member.avatar}
+                      {member.image_url ? (
+                        <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="h-8 w-8 text-muted-foreground" />
+                      )}
                     </div>
 
                     <div className="flex-1">
@@ -154,7 +266,11 @@ const FamilyPage = () => {
                           {member.role}
                         </Badge>
                       </div>
-                      
+
+                      {member.email && (
+                        <p className="text-xs text-muted-foreground mb-1 mt-[-2px]">{member.email}</p>
+                      )}
+
                       <p className="text-sm text-muted-foreground mb-4">Full access to manage activities</p>
 
                       <div className="flex gap-6">
@@ -176,9 +292,9 @@ const FamilyPage = () => {
                     </div>
 
                     {permissions.canManageMembers && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => openEditDialog(member)}
                       >
@@ -207,29 +323,38 @@ const FamilyPage = () => {
                   key={member.id}
                   className="group relative overflow-hidden bg-card rounded-2xl border border-border/50 p-5 transition-all duration-300 hover:shadow-elevated hover:-translate-y-1"
                 >
-                  <div 
+                  <div
                     className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 -translate-y-1/2 translate-x-1/2"
                     style={{ background: member.color }}
                   />
 
                   <div className="relative">
                     <div className="flex items-center gap-3 mb-4">
-                      <div 
-                        className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl"
+                      <div
+                        className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl overflow-hidden"
                         style={{ backgroundColor: `${member.color}20` }}
                       >
-                        {member.avatar}
+                        {member.image_url ? (
+                          <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="h-6 w-6 text-muted-foreground" />
+                        )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-display font-bold text-lg">{member.name}</h3>
-                        <Badge variant="outline" className="capitalize text-xs">
-                          {member.role}
-                        </Badge>
+                        <h3 className="font-display font-bold text-lg leading-tight truncate">{member.name}</h3>
+                        <div className="flex flex-col gap-1 items-start mt-1">
+                          {member.email && (
+                            <p className="text-[10px] text-muted-foreground truncate max-w-[120px]">{member.email}</p>
+                          )}
+                          <Badge variant="outline" className="capitalize text-[10px] px-1.5 h-4">
+                            {member.role}
+                          </Badge>
+                        </div>
                       </div>
                       {permissions.canManageMembers && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => openEditDialog(member)}
                         >
@@ -249,9 +374,9 @@ const FamilyPage = () => {
                       </div>
                     </div>
 
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="w-full justify-between"
                       onClick={() => handleViewActivities(member.id)}
                     >
@@ -298,14 +423,26 @@ const FamilyPage = () => {
             <DialogTitle className="font-display text-xl">Edit Family Member</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Avatar Emoji</label>
-              <Input
-                value={editAvatar}
-                onChange={(e) => setEditAvatar(e.target.value)}
-                className="bg-muted/50 border-0 text-2xl text-center"
-                maxLength={4}
-              />
+            <div className="flex flex-col items-center gap-4 py-2">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-full border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/30">
+                  {editImage ? (
+                    <img src={editImage} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="h-10 w-10 text-muted-foreground" />
+                  )}
+                  {uploading && (
+                    <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+                <label className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full cursor-pointer shadow-soft hover:scale-110 transition-transform">
+                  <Upload className="h-4 w-4" />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, true)} disabled={uploading} />
+                </label>
+              </div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Upload Profile Photo</p>
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">Name</label>
@@ -315,14 +452,34 @@ const FamilyPage = () => {
                 className="bg-muted/50 border-0"
               />
             </div>
-            <div className="flex gap-3 justify-end pt-2">
-              <Button variant="outline" onClick={() => setEditingMember(null)}>
-                Cancel
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Email Address</label>
+              <Input
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="email@example.com"
+                className="bg-muted/50 border-0"
+              />
+            </div>
+            <div className="flex gap-3 justify-between pt-2">
+              <Button
+                variant="ghost"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={handleDeleteMember}
+                disabled={deleting}
+              >
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                Delete
               </Button>
-              <Button className="gradient-warm" onClick={handleSaveEdit} disabled={saving || !editName.trim()}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                Save
-              </Button>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setEditingMember(null)}>
+                  Cancel
+                </Button>
+                <Button className="gradient-warm" onClick={handleSaveEdit} disabled={saving || !editName.trim()}>
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  Save
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
@@ -335,14 +492,26 @@ const FamilyPage = () => {
             <DialogTitle className="font-display text-xl">Add Family Member</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Avatar Emoji</label>
-              <Input
-                value={newAvatar}
-                onChange={(e) => setNewAvatar(e.target.value)}
-                className="bg-muted/50 border-0 text-2xl text-center"
-                maxLength={4}
-              />
+            <div className="flex flex-col items-center gap-4 py-2">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-full border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/30">
+                  {newImage ? (
+                    <img src={newImage} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="h-10 w-10 text-muted-foreground" />
+                  )}
+                  {uploading && (
+                    <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+                <label className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full cursor-pointer shadow-soft hover:scale-110 transition-transform">
+                  <Upload className="h-4 w-4" />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, false)} disabled={uploading} />
+                </label>
+              </div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Upload Profile Photo</p>
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">Name</label>
@@ -352,6 +521,16 @@ const FamilyPage = () => {
                 className="bg-muted/50 border-0"
                 placeholder="Enter name"
               />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Email Address</label>
+              <Input
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="email@example.com"
+                className="bg-muted/50 border-0"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">They will receive an email to set their login password.</p>
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">Role</label>

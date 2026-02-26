@@ -33,6 +33,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string | null
+          family_id: string | null
         }
         Insert: {
           assigned_children?: string[]
@@ -52,6 +53,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id?: string | null
+          family_id?: string | null
         }
         Update: {
           assigned_children?: string[]
@@ -76,31 +78,36 @@ export type Database = {
       }
       family_members: {
         Row: {
-          avatar: string
           color: string
           created_at: string
           id: string
           name: string
           role: string
           user_id: string | null
+          email: string | null
+          image_url: string | null
+          family_id: string | null
         }
         Insert: {
-          avatar?: string
           color?: string
           created_at?: string
           id?: string
           name: string
           role?: string
           user_id?: string | null
+          email?: string | null
+          image_url?: string | null
+          family_id?: string | null
         }
         Update: {
-          avatar?: string
           color?: string
           created_at?: string
           id?: string
           name?: string
           role?: string
           user_id?: string | null
+          email?: string | null
+          image_url?: string | null
         }
         Relationships: []
       }
@@ -112,6 +119,14 @@ export type Database = {
           id: string
           updated_at: string
           user_id: string
+          push_notifications: boolean | null
+          email_notifications: boolean | null
+          reminder_time: string | null
+          timezone: string | null
+          week_starts_on: string | null
+          require_pin_for_children: boolean | null
+          activity_history_retention: string | null
+          family_id: string | null
         }
         Insert: {
           created_at?: string
@@ -120,6 +135,14 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id: string
+          push_notifications?: boolean | null
+          email_notifications?: boolean | null
+          reminder_time?: string | null
+          timezone?: string | null
+          week_starts_on?: string | null
+          require_pin_for_children?: boolean | null
+          activity_history_retention?: string | null
+          family_id?: string | null
         }
         Update: {
           created_at?: string
@@ -128,8 +151,60 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+          push_notifications?: boolean | null
+          email_notifications?: boolean | null
+          reminder_time?: string | null
+          timezone?: string | null
+          week_starts_on?: string | null
+          require_pin_for_children?: boolean | null
+          activity_history_retention?: string | null
         }
         Relationships: []
+      }
+      posts: {
+        Row: {
+          author_id: string | null
+          content: string
+          created_at: string
+          family_id: string | null
+          id: string
+          image_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          content: string
+          created_at?: string
+          family_id?: string | null
+          id?: string
+          image_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          content?: string
+          created_at?: string
+          family_id?: string | null
+          id?: string
+          image_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

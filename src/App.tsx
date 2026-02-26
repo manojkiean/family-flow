@@ -1,20 +1,23 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ActiveMemberProvider } from "@/contexts/ActiveMemberContext";
+import { ActiveMemberProvider, useActiveMember } from "@/contexts/ActiveMemberContext";
 import { useFamilyMembers } from "@/hooks/useDatabase";
 import { useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Calendar from "./pages/Calendar";
 import Activities from "./pages/Activities";
 import Family from "./pages/Family";
+import Wall from "./pages/Wall";
 import Settings from "./pages/Settings";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
+import { ProfileSelection } from "./pages/ProfileSelection";
 import Auth from "./pages/Auth";
 import { Loader2 } from 'lucide-react';
 
@@ -22,6 +25,16 @@ const queryClient = new QueryClient();
 
 function AppWithAuth() {
   const { user, loading: authLoading } = useAuth();
+  const [isRecovering, setIsRecovering] = useState(false);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecovering(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   if (authLoading) {
     return (
@@ -31,8 +44,8 @@ function AppWithAuth() {
     );
   }
 
-  if (!user) {
-    return <Auth />;
+  if (!user || isRecovering) {
+    return <Auth initialMode={isRecovering ? 'reset' : 'login'} />;
   }
 
   return <AuthenticatedApp />;
@@ -61,18 +74,33 @@ function AuthenticatedApp() {
 
   return (
     <ActiveMemberProvider familyMembers={familyMembers}>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/activities" element={<Activities />} />
-        <Route path="/family" element={<Family />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <ActiveMemberConsumer>
+        {({ activeMember }) =>
+          !activeMember ? (
+            <ProfileSelection />
+          ) : (
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/activities" element={<Activities />} />
+              <Route path="/family" element={<Family />} />
+              <Route path="/wall" element={<Wall />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          )
+        }
+      </ActiveMemberConsumer>
     </ActiveMemberProvider>
   );
 }
+
+// Helper component to use context inside the same file
+const ActiveMemberConsumer = ({ children }: { children: (props: any) => React.ReactNode }) => {
+  const context = useActiveMember();
+  return <>{children(context)}</>;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

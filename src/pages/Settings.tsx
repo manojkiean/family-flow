@@ -22,18 +22,34 @@ import {
 const SettingsPage = () => {
   const { user } = useAuth();
   const [familyName, setFamilyName] = useState('FamilyHub');
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(false);
+  const [reminderTime, setReminderTime] = useState('1 hour');
+  const [timezone, setTimezone] = useState('Eastern Time (ET)');
+  const [weekStartsOn, setWeekStartsOn] = useState('Sunday');
+  const [requirePin, setRequirePin] = useState(false);
+  const [retention, setRetention] = useState('Forever');
+  const [familyPassword, setFamilyPassword] = useState('family123');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user?.id) {
       supabase
         .from('profiles')
-        .select('name, family_name')
+        .select('*')
         .eq('user_id', user.id)
         .maybeSingle()
-        .then(({ data, error }) => {
-          if (!error && (data?.name || data?.family_name)) {
-            setFamilyName(data.name || data.family_name || '');
+        .then(({ data, error }: { data: any, error: any }) => {
+          if (!error && data) {
+            setFamilyName(data.name || data.family_name || 'FamilyHub');
+            setPushNotifications(data.push_notifications ?? true);
+            setEmailNotifications(data.email_notifications ?? false);
+            setReminderTime(data.reminder_time ?? '1 hour');
+            setTimezone(data.timezone ?? 'Eastern Time (ET)');
+            setWeekStartsOn(data.week_starts_on ?? 'Sunday');
+            setRequirePin(data.require_pin_for_children ?? false);
+            setRetention(data.activity_history_retention ?? 'Forever');
+            setFamilyPassword(data.family_password || 'family123');
           }
           setLoading(false);
         });
@@ -49,14 +65,27 @@ const SettingsPage = () => {
         .upsert({
           user_id: user.id,
           family_name: familyName,
-          name: familyName
-        });
+          name: familyName,
+          push_notifications: pushNotifications,
+          email_notifications: emailNotifications,
+          reminder_time: reminderTime,
+          timezone: timezone,
+          week_starts_on: weekStartsOn,
+          require_pin_for_children: requirePin,
+          activity_history_retention: retention,
+          family_password: familyPassword,
+          updated_at: new Date().toISOString()
+        } as any, { onConflict: 'user_id' });
 
       if (error) throw error;
       toast({ title: 'Settings saved', description: 'Your family preferences have been updated.' });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save error:', err);
-      toast({ title: 'Error', description: 'Failed to save settings.', variant: 'destructive' });
+      toast({
+        title: 'Save Error',
+        description: err.message || 'Make sure you have run the latest database migration in Supabase.',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -90,7 +119,10 @@ const SettingsPage = () => {
                   <p className="text-sm text-muted-foreground">Receive alerts on your device</p>
                 </div>
               </div>
-              <Switch defaultChecked />
+              <Switch
+                checked={pushNotifications}
+                onCheckedChange={setPushNotifications}
+              />
             </div>
 
             <Separator />
@@ -103,7 +135,10 @@ const SettingsPage = () => {
                   <p className="text-sm text-muted-foreground">Daily summary of activities</p>
                 </div>
               </div>
-              <Switch />
+              <Switch
+                checked={emailNotifications}
+                onCheckedChange={setEmailNotifications}
+              />
             </div>
 
             <Separator />
@@ -116,7 +151,11 @@ const SettingsPage = () => {
                   <p className="text-sm text-muted-foreground">Default time before activities</p>
                 </div>
               </div>
-              <select className="bg-muted border-0 rounded-lg px-3 py-2 text-sm">
+              <select
+                className="bg-muted border-0 rounded-lg px-3 py-2 text-sm"
+                value={reminderTime}
+                onChange={(e) => setReminderTime(e.target.value)}
+              >
                 <option>10 minutes</option>
                 <option>30 minutes</option>
                 <option>1 hour</option>
@@ -151,7 +190,11 @@ const SettingsPage = () => {
 
             <div className="grid gap-2">
               <Label>Time Zone</Label>
-              <select className="w-full bg-muted/50 border-0 rounded-lg px-3 py-2">
+              <select
+                className="w-full bg-muted/50 border-0 rounded-lg px-3 py-2"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+              >
                 <option>Eastern Time (ET)</option>
                 <option>Central Time (CT)</option>
                 <option>Mountain Time (MT)</option>
@@ -161,7 +204,11 @@ const SettingsPage = () => {
 
             <div className="grid gap-2">
               <Label>Week Starts On</Label>
-              <select className="w-full bg-muted/50 border-0 rounded-lg px-3 py-2">
+              <select
+                className="w-full bg-muted/50 border-0 rounded-lg px-3 py-2"
+                value={weekStartsOn}
+                onChange={(e) => setWeekStartsOn(e.target.value)}
+              >
                 <option>Sunday</option>
                 <option>Monday</option>
               </select>
@@ -187,7 +234,10 @@ const SettingsPage = () => {
                 <p className="font-medium">Require PIN for children</p>
                 <p className="text-sm text-muted-foreground">Children need PIN to mark tasks complete</p>
               </div>
-              <Switch />
+              <Switch
+                checked={requirePin}
+                onCheckedChange={setRequirePin}
+              />
             </div>
 
             <Separator />
@@ -197,12 +247,34 @@ const SettingsPage = () => {
                 <p className="font-medium">Activity History</p>
                 <p className="text-sm text-muted-foreground">Keep completed activities for</p>
               </div>
-              <select className="bg-muted border-0 rounded-lg px-3 py-2 text-sm">
+              <select
+                className="bg-muted border-0 rounded-lg px-3 py-2 text-sm"
+                value={retention}
+                onChange={(e) => setRetention(e.target.value)}
+              >
                 <option>30 days</option>
                 <option>90 days</option>
                 <option>1 year</option>
                 <option>Forever</option>
               </select>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4 pt-2">
+              <div>
+                <p className="font-medium">Family Entry Code</p>
+                <p className="text-sm text-muted-foreground mb-3">The shared password your children use at the login screen</p>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    value={familyPassword}
+                    onChange={(e) => setFamilyPassword(e.target.value)}
+                    className="bg-muted/50 border-0 flex-1"
+                    placeholder="e.g. family123"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

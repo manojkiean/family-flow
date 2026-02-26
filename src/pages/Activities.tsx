@@ -9,8 +9,9 @@ import { Activity, ActivityCategory } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { Search, Plus, CheckCircle2, Circle, Loader2 } from 'lucide-react';
+import { Search, Plus, CheckCircle2, Circle, Loader2, LayoutGrid, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const categories: { value: ActivityCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -32,6 +33,7 @@ const ActivitiesPage = () => {
   const [showCompleted, setShowCompleted] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | undefined>();
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const loading = membersLoading || activitiesLoading;
 
@@ -125,18 +127,18 @@ const ActivitiesPage = () => {
   // Children only see activities assigned to them
   const visibleActivities = permissions.canViewAllActivities
     ? activities
-    : activities.filter(a => 
-        a.assignedTo.includes(activeMember?.id || '') || 
-        a.assignedChildren.includes(activeMember?.id || '')
-      );
+    : activities.filter(a =>
+      a.assignedTo.includes(activeMember?.id || '') ||
+      a.assignedChildren.includes(activeMember?.id || '')
+    );
 
   const filteredActivities = visibleActivities.filter(activity => {
     const matchesSearch = activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         activity.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      activity.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || activity.category === selectedCategory;
     const matchesCompleted = showCompleted || !activity.completed;
     const matchesMember = !memberFilter || activity.assignedTo.includes(memberFilter) || activity.assignedChildren.includes(memberFilter);
-    
+
     return matchesSearch && matchesCategory && matchesCompleted && matchesMember;
   });
 
@@ -166,7 +168,7 @@ const ActivitiesPage = () => {
           </div>
 
           {permissions.canCreateActivity && (
-            <Button 
+            <Button
               className="gradient-warm shadow-soft"
               onClick={() => {
                 setEditingActivity(undefined);
@@ -211,20 +213,37 @@ const ActivitiesPage = () => {
             </div>
 
             {/* Show Completed Toggle */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowCompleted(!showCompleted)}
-              className={cn(showCompleted && "bg-accent/10 border-accent text-accent")}
-            >
-              {showCompleted ? <CheckCircle2 className="h-4 w-4 mr-2" /> : <Circle className="h-4 w-4 mr-2" />}
-              Show Completed
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCompleted(!showCompleted)}
+                className={cn(showCompleted && "bg-accent/10 border-accent text-accent")}
+              >
+                {showCompleted ? <CheckCircle2 className="h-4 w-4 mr-2" /> : <Circle className="h-4 w-4 mr-2" />}
+                Show Completed
+              </Button>
+
+              <div className="h-8 w-px bg-border/50 mx-1 hidden sm:block" />
+
+              <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as 'grid' | 'list')} size="sm">
+                <ToggleGroupItem value="grid" aria-label="Grid view">
+                  <LayoutGrid className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="List view">
+                  <List className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
           </div>
         </div>
 
-        {/* Activities Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Activities List/Grid */}
+        <div className={cn(
+          viewMode === 'grid'
+            ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            : "flex flex-col gap-3"
+        )}>
           {filteredActivities.length > 0 ? (
             filteredActivities.map(activity => (
               <ActivityCard
@@ -233,15 +252,19 @@ const ActivitiesPage = () => {
                 familyMembers={familyMembers}
                 onToggleComplete={handleToggleComplete}
                 onEdit={permissions.canEditActivity ? handleEditActivity : undefined}
+                compact={viewMode === 'list'}
               />
             ))
           ) : (
-            <div className="sm:col-span-2 lg:col-span-3 text-center py-16 bg-card rounded-2xl border border-border/50">
+            <div className={cn(
+              "text-center py-16 bg-card rounded-2xl border border-border/50",
+              viewMode === 'grid' && "sm:col-span-2 lg:col-span-3"
+            )}>
               <div className="text-5xl mb-4">🔍</div>
               <h3 className="font-display font-semibold text-lg">No activities found</h3>
               <p className="text-muted-foreground mb-4">Try adjusting your filters</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setSearchQuery('');
                   setSelectedCategory('all');

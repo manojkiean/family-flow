@@ -13,7 +13,9 @@ import {
   ChevronLeft,
   ChevronRight,
   HelpCircle,
-  LogOut
+  LogOut,
+  User,
+  MessageSquare
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +24,7 @@ import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { FamilyMember } from '@/types/family';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -31,7 +34,9 @@ interface SidebarProps {
 }
 
 const navItems = [
+
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { icon: MessageSquare, label: 'Wall', path: '/wall' },
   { icon: Calendar, label: 'Calendar', path: '/calendar' },
   { icon: ClipboardList, label: 'Activities', path: '/activities' },
   { icon: Users, label: 'Family', path: '/family' },
@@ -42,9 +47,14 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
   const location = useLocation();
   const navigate = useNavigate();
   const { familyMembers, loading: membersLoading } = useFamilyMembers();
-  const { permissions } = useActiveMember();
+  const { activeMember, setActiveMember, logoutProfile, permissions } = useActiveMember();
   const { user, signOut } = useAuth();
   const [familyName, setFamilyName] = useState<string>('FamilyHub');
+  const handleMemberSelect = (member: FamilyMember) => {
+    setActiveMember(member);
+    navigate(`/activities?member=${member.id}`);
+    onClose();
+  };
 
   useEffect(() => {
     if (user?.id) {
@@ -191,14 +201,21 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
                         collapsed && "lg:justify-center lg:px-2"
                       )}
                       title={member.name}
-                      onClick={() => {
-                        navigate(`/activities?member=${member.id}`);
-                        onClose();
-                      }}
+                      onClick={() => handleMemberSelect(member)}
                     >
-                      <RoleIcon className={cn("h-4 w-4 shrink-0", iconColor)} />
+                      <div className={cn(
+                        "w-6 h-6 rounded-lg flex items-center justify-center overflow-hidden shrink-0",
+                        collapsed ? "" : "bg-muted/50"
+                      )}>
+                        {member.image_url ? (
+                          <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className={cn("w-full h-full flex items-center justify-center", iconColor)}>
+                            <RoleIcon className="h-3 w-3" />
+                          </div>
+                        )}
+                      </div>
                       <span className={cn(
-                        "text-sm font-medium truncate",
                         collapsed && "lg:hidden"
                       )}>{member.name}</span>
                     </button>
@@ -211,6 +228,21 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
           {/* Bottom actions — FAQ & Sign Out */}
           <div className="px-3 py-3 border-t border-border">
             <div className="space-y-1">
+              <button
+                className={cn(
+                  "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all duration-200",
+                  "hover:bg-muted text-left",
+                  collapsed && "lg:justify-center lg:px-2"
+                )}
+                title="Switch Profile"
+                onClick={() => {
+                  logoutProfile();
+                  onClose();
+                }}
+              >
+                <Users className="h-5 w-5 text-muted-foreground shrink-0" />
+                <span className={cn("text-sm", collapsed && "lg:hidden")}>Switch Profile</span>
+              </button>
               <button
                 className={cn(
                   "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all duration-200",

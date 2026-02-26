@@ -20,7 +20,7 @@ const faqs = [
             },
             {
                 question: "How do I add a new family member?",
-                answer: "Go to the 'Family' page from the sidebar. If you have parent permissions, you'll see an 'Add Member' button where you can customize their name, role, and avatar."
+                answer: "Go to the 'Family' page from the sidebar. If you have parent permissions, you'll see an 'Add Member' button where you can customize their name, role, and profile photo."
             }
         ]
     },
@@ -48,7 +48,7 @@ const faqs = [
             },
             {
                 question: "Can I change a member's role after they've been added?",
-                answer: "Yes, parents can edit any member's profile from the Family page to change their role, name, or avatar."
+                answer: "Yes, parents can edit any member's profile from the Family page to change their role, name, or profile photo."
             }
         ]
     }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Activity, FamilyMember, ActivityCategory } from '@/types/family';
-import { Clock, MapPin, Pencil, Paperclip, Users, FileText, Info, MessagesSquare, Calendar as CalendarIcon } from 'lucide-react';
+import { Clock, MapPin, Pencil, Paperclip, Users, FileText, Info, MessagesSquare, Calendar as CalendarIcon, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -61,7 +61,10 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
 
           <div className={cn("w-1 h-10 rounded-full", style.bg.replace('-soft', ''))} />
 
-          <div className="flex-1 min-w-0">
+          <div
+            className={cn("flex-1 min-w-0", onEdit && "cursor-pointer")}
+            onClick={() => onEdit?.(activity)}
+          >
             <p className={cn(
               "font-medium truncate",
               activity.completed && "line-through text-muted-foreground"
@@ -74,15 +77,35 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
             </p>
           </div>
 
-          <div className="flex -space-x-2">
-            {assignedMembers.slice(0, 2).map(member => (
-              <div
-                key={member.id}
-                className="w-7 h-7 rounded-full bg-muted border-2 border-card flex items-center justify-center"
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {assignedMembers.slice(0, 2).map(member => (
+                <div
+                  key={member.id}
+                  className="w-7 h-7 rounded-full bg-muted border-2 border-card flex items-center justify-center shrink-0 overflow-hidden"
+                >
+                  {member.image_url ? (
+                    <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="h-3 w-3 text-muted-foreground" />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(activity);
+                }}
               >
-                <span className="text-sm">{member.avatar}</span>
-              </div>
-            ))}
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -165,7 +188,13 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
                       <div className="space-y-2">
                         {assignedMembers.length > 0 ? assignedMembers.map(member => (
                           <div key={member.id} className="flex items-center gap-2.5">
-                            <span className="text-xl leading-none">{member.avatar}</span>
+                            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                              {member.image_url ? (
+                                <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <User className="h-3 w-3 text-muted-foreground" />
+                              )}
+                            </div>
                             <span className="text-xs font-semibold">{member.name}</span>
                           </div>
                         )) : <span className="text-[10px] text-muted-foreground italic">None</span>}
@@ -180,7 +209,13 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
                       <div className="space-y-2">
                         {children.length > 0 ? children.map(child => (
                           <div key={child.id} className="flex items-center gap-2.5">
-                            <span className="text-xl leading-none">{child.avatar}</span>
+                            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                              {child.image_url ? (
+                                <img src={child.image_url} alt={child.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <User className="h-3 w-3 text-muted-foreground" />
+                              )}
+                            </div>
                             <span className="text-xs font-semibold">{child.name}</span>
                           </div>
                         )) : <span className="text-[10px] text-muted-foreground italic">None</span>}
@@ -296,8 +331,14 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-muted-foreground">Assigned:</span>
             {assignedMembers.map(member => (
-              <div key={member.id} className="flex items-center gap-1.5 bg-muted/50 rounded-full px-2 py-0.5">
-                <span className="text-sm">{member.avatar}</span>
+              <div key={member.id} className="flex items-center gap-1.5 bg-muted/50 rounded-full pl-0.5 pr-2 py-0.5">
+                <div className="w-5 h-5 rounded-full bg-background flex items-center justify-center overflow-hidden">
+                  {member.image_url ? (
+                    <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="h-3 w-3 text-muted-foreground" />
+                  )}
+                </div>
                 <span className="text-xs font-medium">{member.name}</span>
               </div>
             ))}
@@ -307,8 +348,14 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-muted-foreground">For:</span>
               {children.map(child => (
-                <div key={child.id} className="flex items-center gap-1.5 bg-muted/50 rounded-full px-2 py-0.5">
-                  <span className="text-sm">{child.avatar}</span>
+                <div key={child.id} className="flex items-center gap-1.5 bg-muted/50 rounded-full pl-0.5 pr-2 py-0.5">
+                  <div className="w-5 h-5 rounded-full bg-background flex items-center justify-center overflow-hidden">
+                    {child.image_url ? (
+                      <img src={child.image_url} alt={child.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="h-3 w-3 text-muted-foreground" />
+                    )}
+                  </div>
                   <span className="text-xs font-medium">{child.name}</span>
                 </div>
               ))}

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, Clock, MapPin, X } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, X, User } from 'lucide-react';
 import { Activity, ActivityCategory, RecurrenceType, Priority, FamilyMember } from '@/types/family';
 import { cn } from '@/lib/utils';
 import {
@@ -87,7 +87,7 @@ const priorityOptions: { value: Priority; label: string; color: string }[] = [
 
 export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSubmit }: ActivityFormProps) {
   const isEditing = !!activity;
-  
+
   const form = useForm<ActivityFormData>({
     resolver: zodResolver(activitySchema),
     defaultValues: {
@@ -106,10 +106,7 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
     },
   });
 
-  // Reset form when activity changes (for edit mode)
-  useState(() => {
-    // intentionally empty - we use useEffect below
-  });
+  // No need for redundant state initialization - handled by useEffect below
 
   // biome-ignore lint: reset form when activity or open state changes
   React.useEffect(() => {
@@ -174,10 +171,10 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                 <FormItem>
                   <FormLabel>Title *</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="e.g., Soccer Practice, Doctor's Appointment" 
+                    <Input
+                      placeholder="e.g., Soccer Practice, Doctor's Appointment"
                       className="bg-muted/50 border-0"
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -244,25 +241,27 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
             </div>
 
             {/* Date & Time Row */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date *</FormLabel>
+                    <FormLabel className="mb-0.5">Date *</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant="outline"
                             className={cn(
-                              "bg-muted/50 border-0 justify-start text-left font-normal",
+                              "bg-muted/50 border-0 justify-start text-left font-normal h-10 w-full",
                               !field.value && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : "Pick a date"}
+                            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                            <span className="truncate">
+                              {field.value ? format(field.value, "PPP") : "Pick a date"}
+                            </span>
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -270,7 +269,9 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                         <Calendar
                           mode="single"
                           selected={field.value}
-                          onSelect={field.onChange}
+                          onSelect={(date) => {
+                            if (date) field.onChange(date);
+                          }}
                           initialFocus
                           className="p-3 pointer-events-auto"
                         />
@@ -286,14 +287,14 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                 name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time *</FormLabel>
+                    <FormLabel className="mb-0.5">Start Time *</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          type="time" 
-                          className="bg-muted/50 border-0 pl-9"
-                          {...field} 
+                        <Input
+                          type="time"
+                          className="bg-muted/50 border-0 pl-9 h-10"
+                          {...field}
                         />
                       </div>
                     </FormControl>
@@ -307,14 +308,14 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                 name="endTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>End Time</FormLabel>
+                    <FormLabel className="mb-0.5">End Time</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          type="time" 
-                          className="bg-muted/50 border-0 pl-9"
-                          {...field} 
+                        <Input
+                          type="time"
+                          className="bg-muted/50 border-0 pl-9 h-10"
+                          {...field}
                         />
                       </div>
                     </FormControl>
@@ -375,15 +376,21 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                           className={cn(
                             "flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all",
                             "border-2",
-                            isSelected 
-                              ? "border-primary bg-primary/10" 
+                            isSelected
+                              ? "border-primary bg-primary/10"
                               : "border-border hover:border-primary/50"
                           )}
                         >
-                          <span className="text-xl">{member.avatar}</span>
+                          <div className="w-6 h-6 rounded-full bg-background flex items-center justify-center overflow-hidden shrink-0">
+                            {member.image_url ? (
+                              <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
                           <span className="font-medium">{member.name}</span>
                           {isSelected && (
-                            <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                            <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center shrink-0">
                               <X className="h-3 w-3 text-primary-foreground" />
                             </div>
                           )}
@@ -419,15 +426,21 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                           className={cn(
                             "flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all",
                             "border-2",
-                            isSelected 
-                              ? "border-accent bg-accent/10" 
+                            isSelected
+                              ? "border-accent bg-accent/10"
                               : "border-border hover:border-accent/50"
                           )}
                         >
-                          <span className="text-xl">{member.avatar}</span>
+                          <div className="w-6 h-6 rounded-full bg-background flex items-center justify-center overflow-hidden shrink-0">
+                            {member.image_url ? (
+                              <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
                           <span className="font-medium">{member.name}</span>
                           {isSelected && (
-                            <div className="w-4 h-4 rounded-full bg-accent flex items-center justify-center">
+                            <div className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
                               <X className="h-3 w-3 text-accent-foreground" />
                             </div>
                           )}
@@ -450,10 +463,10 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                   <FormControl>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        placeholder="e.g., School, Sports Center, Home" 
+                      <Input
+                        placeholder="e.g., School, Sports Center, Home"
                         className="bg-muted/50 border-0 pl-9"
-                        {...field} 
+                        {...field}
                       />
                     </div>
                   </FormControl>
@@ -470,11 +483,11 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Add any additional details..."
                       className="bg-muted/50 border-0 resize-none"
                       rows={3}
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -490,11 +503,11 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                 <FormItem>
                   <FormLabel>Notes / Instructions</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Any special instructions or reminders..."
                       className="bg-muted/50 border-0 resize-none"
                       rows={2}
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -504,16 +517,16 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
 
             {/* Actions */}
             <div className="flex gap-3 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => onOpenChange(false)}
                 className="flex-1"
               >
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="flex-1 gradient-warm shadow-soft"
               >
                 {isEditing ? 'Save Changes' : 'Create Activity'}

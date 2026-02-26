@@ -1,7 +1,7 @@
-import { useActiveMember } from '@/contexts/ActiveMemberContext';
-import { useFamilyMembers } from '@/hooks/useDatabase';
-import { Crown, ChevronDown } from 'lucide-react';
+import { Crown, ChevronDown, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFamilyMembers } from '@/hooks/useDatabase';
+import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +21,12 @@ export function MemberPicker() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted transition-colors outline-none">
-        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-          <span className="text-lg">{activeMember.avatar || '👤'}</span>
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+          {activeMember.image_url ? (
+            <img src={activeMember.image_url} alt={activeMember.name} className="w-full h-full object-cover" />
+          ) : (
+            <User className="h-4 w-4 text-primary" />
+          )}
         </div>
         <div className="hidden sm:block text-left">
           <p className="text-sm font-medium leading-none">{activeMember.name}</p>
@@ -42,8 +46,12 @@ export function MemberPicker() {
               member.id === activeMember.id && "bg-primary/10"
             )}
           >
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-lg">{member.avatar || '👤'}</span>
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+              {member.image_url ? (
+                <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+              ) : (
+                <User className="h-4 w-4 text-muted-foreground" />
+              )}
             </div>
             <div className="flex-1">
               <p className="font-medium text-sm">{member.name}</p>

@@ -10,8 +10,10 @@ export interface FamilyMember {
   id: string;
   name: string;
   role: UserRole;
-  avatar?: string;
+  image_url?: string;
+  email?: string;
   color: string;
+  pin?: string;
 }
 
 export interface Activity {
@@ -34,4 +36,15 @@ export interface Activity {
 export interface DaySchedule {
   date: Date;
   activities: Activity[];
+}
+
+export interface Post {
+  id: string;
+  content: string;
+  image_url?: string;
+  author_id: string;
+  family_id: string;
+  created_at: string;
+  updated_at: string;
+  author?: FamilyMember;
 }

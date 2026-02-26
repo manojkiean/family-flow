@@ -17,6 +17,7 @@ export function FamilyMemberCard({ member, activities, onClick }: FamilyMemberCa
 
   const RoleIcon = member.role === 'parent' ? Crown : Star;
   const iconColor = member.role === 'parent' ? 'text-primary' : 'text-category-home';
+  const roleLabel = member.role === 'parent' ? 'Parent' : 'Child';
 
   return (
     <div
@@ -29,14 +30,29 @@ export function FamilyMemberCard({ member, activities, onClick }: FamilyMemberCa
       <div className="relative z-10 flex items-center justify-between gap-4">
         {/* Name and Role Section */}
         <div className="flex items-center gap-3 min-w-0">
-          <div
-            className={cn(
-              "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm",
-              iconColor,
-              "bg-background border border-border/50 transition-colors group-hover:bg-muted/50"
+          <div className="relative shrink-0">
+            <div
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shadow-sm bg-background border border-border/50",
+                "transition-colors group-hover:bg-muted/50"
+              )}
+            >
+              {member.image_url ? (
+                <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className={cn("w-full h-full flex items-center justify-center bg-muted/30", iconColor)}>
+                  <RoleIcon className="h-5 w-5" />
+                </div>
+              )}
+            </div>
+            {member.image_url && (
+              <div className={cn(
+                "absolute -top-1 -right-1 w-4 h-4 rounded-full bg-background border border-border/50 flex items-center justify-center shadow-xs",
+                iconColor
+              )}>
+                <RoleIcon className="h-2.5 w-2.5" />
+              </div>
             )}
-          >
-            <RoleIcon className="h-4 w-4" />
           </div>
           <div className="min-w-0">
             <h4 className="font-display font-semibold text-sm leading-tight truncate">{member.name}</h4>

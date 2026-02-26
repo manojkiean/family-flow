@@ -9,7 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { Users, ArrowRight, Plus, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const avatarOptions = ['👨', '👩', '👦', '👧', '👶', '🧑', '👴', '👵'];
+// Role options for onboarding
 const roleOptions = [
   { value: 'parent', label: 'Parent', emoji: '👨‍👩‍👧' },
   { value: 'child', label: 'Child', emoji: '🧒' },
@@ -17,8 +17,8 @@ const roleOptions = [
 
 interface MemberDraft {
   name: string;
-  avatar: string;
   role: 'parent' | 'child';
+  pin: string;
 }
 
 const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
@@ -27,12 +27,12 @@ const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
   const [step, setStep] = useState<'welcome' | 'members'>('welcome');
   const [familyName, setFamilyName] = useState('');
   const [members, setMembers] = useState<MemberDraft[]>([
-    { name: '', avatar: '👨', role: 'parent' },
+    { name: '', role: 'parent', pin: '' },
   ]);
   const [saving, setSaving] = useState(false);
 
   const addMemberDraft = () => {
-    setMembers(prev => [...prev, { name: '', avatar: '👩', role: 'parent' }]);
+    setMembers(prev => [...prev, { name: '', role: 'parent', pin: '' }]);
   };
 
   const removeMemberDraft = (index: number) => {
@@ -66,8 +66,8 @@ const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
       for (const member of members) {
         await addMember({
           name: member.name.trim(),
-          avatar: member.avatar,
           role: member.role,
+          pin: member.pin || Math.floor(1000 + Math.random() * 9000).toString(),
           color: member.role === 'parent' ? 'hsl(210 60% 50%)' : 'hsl(340 70% 60%)',
         });
       }
@@ -142,27 +142,7 @@ const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
                     onChange={(e) => updateMember(index, { name: e.target.value })}
                   />
 
-                  {/* Avatar picker */}
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1.5 block">Avatar</Label>
-                    <div className="flex gap-2 flex-wrap">
-                      {avatarOptions.map(emoji => (
-                        <button
-                          key={emoji}
-                          type="button"
-                          onClick={() => updateMember(index, { avatar: emoji })}
-                          className={cn(
-                            "w-9 h-9 rounded-full flex items-center justify-center text-lg transition-all",
-                            member.avatar === emoji
-                              ? "bg-primary/20 ring-2 ring-primary"
-                              : "bg-muted hover:bg-muted/80"
-                          )}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Role picker */}
 
                   {/* Role picker */}
                   <div>

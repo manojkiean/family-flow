@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { FamilyMember } from '@/types/family';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Permissions {
   canCreateActivity: boolean;
@@ -14,6 +15,7 @@ interface Permissions {
 interface ActiveMemberContextType {
   activeMember: FamilyMember | null;
   setActiveMember: (member: FamilyMember) => void;
+  logoutProfile: () => void;
   permissions: Permissions;
   isParent: boolean;
   isChild: boolean;
@@ -31,7 +33,8 @@ const defaultPermissions: Permissions = {
 
 const ActiveMemberContext = createContext<ActiveMemberContextType>({
   activeMember: null,
-  setActiveMember: () => {},
+  setActiveMember: () => { },
+  logoutProfile: () => { },
   permissions: defaultPermissions,
   isParent: false,
   isChild: false,
@@ -39,27 +42,29 @@ const ActiveMemberContext = createContext<ActiveMemberContextType>({
 
 export function ActiveMemberProvider({ children, familyMembers }: { children: React.ReactNode; familyMembers: FamilyMember[] }) {
   const [activeMember, setActiveMemberState] = useState<FamilyMember | null>(null);
+  const { user } = useAuth();
 
-  // Load saved member from localStorage
+  // Load saved member from localStorage or match by email
   useEffect(() => {
     if (familyMembers.length === 0) return;
     const savedId = localStorage.getItem('activeMemberId');
-    const found = savedId ? familyMembers.find(m => m.id === savedId) : null;
+    let found = savedId ? familyMembers.find(m => m.id === savedId) : null;
+
+    // If not found in localStorage, try matching by current user email
+    if (!found && user?.email) {
+      found = familyMembers.find(m => m.email?.toLowerCase() === user.email?.toLowerCase()) || null;
+    }
+
     if (found) {
       setActiveMemberState(found);
-    } else {
-      // Default to first parent, or first member
-      const defaultMember = familyMembers.find(m => m.role === 'parent') || familyMembers[0];
-      setActiveMemberState(defaultMember);
-      localStorage.setItem('activeMemberId', defaultMember.id);
     }
-  }, [familyMembers]);
+  }, [familyMembers, user]);
 
   // Keep activeMember in sync with familyMembers data
   useEffect(() => {
     if (activeMember && familyMembers.length > 0) {
       const updated = familyMembers.find(m => m.id === activeMember.id);
-      if (updated && (updated.name !== activeMember.name || updated.avatar !== activeMember.avatar)) {
+      if (updated && (updated.name !== activeMember.name || updated.image_url !== activeMember.image_url)) {
         setActiveMemberState(updated);
       }
     }
@@ -68,6 +73,11 @@ export function ActiveMemberProvider({ children, familyMembers }: { children: Re
   const setActiveMember = (member: FamilyMember) => {
     setActiveMemberState(member);
     localStorage.setItem('activeMemberId', member.id);
+  };
+
+  const logoutProfile = () => {
+    setActiveMemberState(null);
+    localStorage.removeItem('activeMemberId');
   };
 
   const isParent = activeMember?.role === 'parent';
@@ -101,7 +111,7 @@ export function ActiveMemberProvider({ children, familyMembers }: { children: Re
   }, [activeMember, isParent]);
 
   return (
-    <ActiveMemberContext.Provider value={{ activeMember, setActiveMember, permissions, isParent, isChild }}>
+    <ActiveMemberContext.Provider value={{ activeMember, setActiveMember, logoutProfile, permissions, isParent, isChild }}>
       {children}
     </ActiveMemberContext.Provider>
   );
