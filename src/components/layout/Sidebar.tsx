@@ -24,6 +24,7 @@ import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { FamilySwitcher } from './FamilySwitcher';
 import { FamilyMember } from '@/types/family';
 
 interface SidebarProps {
@@ -49,27 +50,11 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
   const { familyMembers, loading: membersLoading } = useFamilyMembers();
   const { activeMember, setActiveMember, logoutProfile, permissions } = useActiveMember();
   const { user, signOut } = useAuth();
-  const [familyName, setFamilyName] = useState<string>('FamilyHub');
   const handleMemberSelect = (member: FamilyMember) => {
     setActiveMember(member);
     navigate(`/activities?member=${member.id}`);
     onClose();
   };
-
-  useEffect(() => {
-    if (user?.id) {
-      supabase
-        .from('profiles')
-        .select('name, family_name')
-        .eq('user_id', user.id)
-        .maybeSingle()
-        .then(({ data, error }) => {
-          if (!error && (data?.name || data?.family_name)) {
-            setFamilyName(data.name || data.family_name || 'FamilyHub');
-          }
-        });
-    }
-  }, [user]);
 
   return (
     <>
@@ -93,12 +78,7 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
           {/* Logo + Collapse Toggle */}
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div className={cn("flex items-center gap-2", collapsed && "lg:justify-center")}>
-              <div className="w-10 h-10 rounded-xl gradient-warm flex items-center justify-center shadow-soft shrink-0">
-                <span className="text-xl">👨‍👩‍👧‍👦</span>
-              </div>
-              <div className={cn(collapsed && "lg:hidden")}>
-                <h1 className="font-display font-bold text-lg text-foreground line-clamp-1">{familyName}</h1>
-              </div>
+              <FamilySwitcher collapsed={collapsed} />
             </div>
 
             {/* Desktop collapse toggle — sits after FamilyHub title */}

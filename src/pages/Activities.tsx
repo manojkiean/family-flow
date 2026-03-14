@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ActivityCard } from '@/components/dashboard/ActivityCard';
 import { ActivityForm } from '@/components/activities/ActivityForm';
-import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
+import { useFamilyData } from '@/contexts/FamilyDataContext';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { Activity, ActivityCategory } from '@/types/family';
 import { Button } from '@/components/ui/button';
@@ -25,8 +25,7 @@ const categories: { value: ActivityCategory | 'all'; label: string }[] = [
 const ActivitiesPage = () => {
   const [searchParams] = useSearchParams();
   const memberFilter = searchParams.get('member');
-  const { familyMembers, loading: membersLoading } = useFamilyMembers();
-  const { activities, loading: activitiesLoading, toggleComplete, addActivity, updateActivity } = useActivities();
+  const { familyMembers, activities, membersLoading, activitiesLoading, toggleComplete, addActivity, updateActivity } = useFamilyData();
   const { activeMember, permissions } = useActiveMember();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ActivityCategory | 'all'>('all');
@@ -115,10 +114,11 @@ const ActivitiesPage = () => {
         });
       }
       setEditingActivity(undefined);
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Activity save error:', err);
       toast({
         title: "Error",
-        description: "Failed to save activity",
+        description: err?.message || "Failed to save activity",
         variant: "destructive",
       });
     }
@@ -145,15 +145,6 @@ const ActivitiesPage = () => {
   const pendingCount = activities.filter(a => !a.completed).length;
   const completedCount = activities.filter(a => a.completed).length;
 
-  if (loading) {
-    return (
-      <AppLayout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AppLayout>
-    );
-  }
 
   return (
     <AppLayout>

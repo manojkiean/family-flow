@@ -38,13 +38,22 @@ const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'signup' | 'r
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast({ title: 'Success!', description: 'Check your email for the confirmation link.' });
+
+        if (data.session) {
+          toast({ title: 'Welcome!', description: 'Your account has been created.' });
+        } else {
+          toast({
+            title: 'Verify your email',
+            description: 'We sent a link to your inbox. Please click it to continue.',
+            duration: 10000
+          });
+        }
       }
     } catch (err: any) {
       toast({
@@ -82,10 +91,10 @@ const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'signup' | 'r
       <div className="w-full max-w-md space-y-8 animate-fade-in">
         {/* Logo */}
         <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Users className="h-8 w-8 text-primary" />
+          <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-4 bg-muted shadow-soft">
+            <img src="/favicon.png" alt="Family Board" className="w-full h-full object-cover" />
           </div>
-          <h1 className="font-display font-bold text-3xl">FamilyHub</h1>
+          <h1 className="font-display font-bold text-3xl">Family Board</h1>
           <p className="text-muted-foreground mt-1">
             {mode === 'reset' ? 'Set your new secure password' :
               mode === 'login' ? 'Sign in to access your family hub' :

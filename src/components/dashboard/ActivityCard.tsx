@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Activity, FamilyMember, ActivityCategory } from '@/types/family';
-import { Clock, MapPin, Pencil, Paperclip, Users, FileText, Info, MessagesSquare, Calendar as CalendarIcon, User } from 'lucide-react';
+import { Clock, MapPin, Pencil, Users, FileText, Info, MessagesSquare, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -51,12 +51,18 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
           "hover:shadow-card hover:border-border",
           activity.completed && "opacity-60"
         )}>
+          {/* Mini calendar badge showing the day number */}
           <button
             onClick={() => setDetailOpen(true)}
-            className={cn("p-1.5 rounded-lg transition-colors shrink-0", `hover:${style.bg}`)}
+            className={cn("flex flex-col items-center justify-center w-10 h-10 rounded-xl shrink-0 transition-all hover:scale-105", style.bg)}
             title="View details"
           >
-            <Paperclip className={cn("h-4 w-4", style.text)} />
+            <span className={cn("text-[9px] font-bold uppercase leading-none", style.text)}>
+              {activity.startTime.toLocaleDateString('en-US', { month: 'short' })}
+            </span>
+            <span className={cn("text-base font-black leading-tight", style.text)}>
+              {activity.startTime.getDate()}
+            </span>
           </button>
 
           <div className={cn("w-1 h-10 rounded-full", style.bg.replace('-soft', ''))} />
@@ -77,21 +83,37 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {assignedMembers.slice(0, 2).map(member => (
-                <div
-                  key={member.id}
-                  className="w-7 h-7 rounded-full bg-muted border-2 border-card flex items-center justify-center shrink-0 overflow-hidden"
-                >
-                  {member.image_url ? (
-                    <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="h-3 w-3 text-muted-foreground" />
+          {/* Show children if assigned, otherwise show parents */}
+          <div className="flex items-center gap-1.5">
+            {(() => {
+              const displayMembers = children.length > 0 ? children : assignedMembers;
+              const isChildren = children.length > 0;
+              return (
+                <div className="flex -space-x-2">
+                  {displayMembers.slice(0, 3).map(member => (
+                    <div
+                      key={member.id}
+                      title={`${member.name}${isChildren ? ' (child)' : ''}`}
+                      className="relative w-7 h-7 rounded-full bg-muted border-2 border-card flex items-center justify-center shrink-0 overflow-hidden"
+                      style={{ borderColor: member.color || undefined }}
+                    >
+                      {member.image_url ? (
+                        <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[10px] font-bold text-muted-foreground">
+                          {member.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {displayMembers.length > 3 && (
+                    <div className="w-7 h-7 rounded-full bg-muted border-2 border-card flex items-center justify-center shrink-0">
+                      <span className="text-[9px] font-bold text-muted-foreground">+{displayMembers.length - 3}</span>
+                    </div>
                   )}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
 
             {onEdit && (
               <Button
@@ -109,134 +131,106 @@ export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit
           </div>
         </div>
 
-        {/* Activity Detail Popup */}
+        {/* Activity Detail Popup — Premium redesign */}
         <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-          <DialogContent className="sm:max-w-md border-none p-0 overflow-hidden rounded-[2rem] bg-card shadow-2xl">
-            <div className={cn("h-36 relative flex items-end p-6", style.bg.replace('-soft', ''))}>
-              <div className="absolute top-4 right-4 animate-pulse pointer-events-none opacity-20">
-                <Paperclip className="h-28 w-28 text-white -rotate-12" />
-              </div>
-              <div className="relative z-10 w-full">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-md text-[10px] font-bold uppercase tracking-wider">
-                    {style.label} {style.emoji}
+          <DialogContent className="sm:max-w-sm border-none p-0 overflow-hidden rounded-3xl bg-card shadow-2xl gap-0">
+
+            {/* ── Hero Header ── */}
+            <div className={cn(
+              "relative p-6 pb-8 overflow-hidden",
+              `bg-${style.bg.replace('-soft', '')}`
+            )}
+              style={{ background: `hsl(var(--${style.bg.replace('-soft', '').replace('bg-', '')}))` }}
+            >
+              {/* Blurred circle decoration */}
+              <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-20 blur-2xl bg-white" />
+              <div className="absolute -bottom-6 -left-4 w-24 h-24 rounded-full opacity-10 blur-xl bg-white" />
+
+              {/* Category pill + Priority */}
+              <div className="relative flex items-center gap-2 mb-5">
+                <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-[11px] font-bold uppercase tracking-wider">
+                  {style.emoji} {style.label}
+                </span>
+                {activity.priority === 'high' && (
+                  <span className="px-2 py-1 rounded-full bg-red-500/80 text-white text-[10px] font-bold uppercase tracking-wider">
+                    🔥 High Priority
                   </span>
-                  {activity.priority === 'high' && (
-                    <Badge className="bg-destructive text-white border-none text-[10px] h-5">HIGH PRIORITY</Badge>
-                  )}
-                </div>
-                <DialogTitle className="font-display font-bold text-2xl text-white">{activity.title}</DialogTitle>
-                <DialogDescription className="text-white/80 text-xs font-medium mt-1">
-                  {formatDate(activity.startTime)}
-                </DialogDescription>
+                )}
+              </div>
+
+              {/* Title */}
+              <DialogTitle className="relative font-display font-bold text-2xl text-white leading-tight mb-1">
+                {activity.title}
+              </DialogTitle>
+              <DialogDescription className="relative text-white/70 text-sm">
+                {formatDate(activity.startTime)}
+              </DialogDescription>
+
+              {/* Large date block — bottom right */}
+              <div className="absolute bottom-4 right-5 flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20">
+                <span className="text-[10px] font-bold text-white/80 uppercase leading-none">
+                  {activity.startTime.toLocaleDateString('en-US', { month: 'short' })}
+                </span>
+                <span className="text-2xl font-black text-white leading-tight">
+                  {activity.startTime.getDate()}
+                </span>
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Description Section */}
-              {activity.description && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">
-                    <FileText className="h-3.5 w-3.5 text-primary" />
-                    <span>Description</span>
-                  </div>
-                  <p className="text-sm text-foreground/80 leading-relaxed bg-muted/30 p-4 rounded-2xl border border-border/20">
-                    {activity.description}
-                  </p>
-                </div>
-              )}
+            {/* ── Body ── */}
+            <div className="p-5 space-y-4">
 
-              {/* Time and Location */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">
-                    <Clock className="h-3.5 w-3.5 text-primary" />
-                    <span>Schedule</span>
-                  </div>
-                  <div className="text-sm font-medium p-4 rounded-2xl bg-muted/30 border border-border/20 h-full">
+              {/* Time + Location pills row */}
+              <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted/60 text-sm font-medium">
+                  <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span>
                     {formatTime(activity.startTime)}
-                    {activity.endTime && ` - ${formatTime(activity.endTime)}`}
-                  </div>
+                    {activity.endTime && ` › ${formatTime(activity.endTime)}`}
+                  </span>
                 </div>
-
                 {activity.location && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">
-                      <MapPin className="h-3.5 w-3.5 text-primary" />
-                      <span>Where</span>
-                    </div>
-                    <div className="text-sm font-medium p-4 rounded-2xl bg-muted/30 border border-border/20 h-full flex items-center">
-                      <span className="truncate">{activity.location}</span>
-                    </div>
+                  <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted/60 text-sm font-medium">
+                    <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span className="truncate max-w-[140px]">{activity.location}</span>
                   </div>
                 )}
               </div>
 
-              {/* Personnel Section - Side by Side */}
-              {(assignedMembers.length > 0 || children.length > 0) && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">
-                    <Users className="h-3.5 w-3.5 text-primary" />
-                    <span>People Involved</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className={cn(
-                      "p-4 rounded-2xl border border-border/20 space-y-3 bg-muted/20",
-                      assignedMembers.length === 0 && "opacity-40 grayscale"
-                    )}>
-                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block border-b border-border/20 pb-2">Assigned To</span>
-                      <div className="space-y-2">
-                        {assignedMembers.length > 0 ? assignedMembers.map(member => (
-                          <div key={member.id} className="flex items-center gap-2.5">
-                            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
-                              {member.image_url ? (
-                                <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <User className="h-3 w-3 text-muted-foreground" />
-                              )}
-                            </div>
-                            <span className="text-xs font-semibold">{member.name}</span>
-                          </div>
-                        )) : <span className="text-[10px] text-muted-foreground italic">None</span>}
-                      </div>
-                    </div>
-
-                    <div className={cn(
-                      "p-4 rounded-2xl border border-border/20 space-y-3 bg-muted/20",
-                      children.length === 0 && "opacity-40 grayscale"
-                    )}>
-                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block border-b border-border/20 pb-2">Assigning For</span>
-                      <div className="space-y-2">
-                        {children.length > 0 ? children.map(child => (
-                          <div key={child.id} className="flex items-center gap-2.5">
-                            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
-                              {child.image_url ? (
-                                <img src={child.image_url} alt={child.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <User className="h-3 w-3 text-muted-foreground" />
-                              )}
-                            </div>
-                            <span className="text-xs font-semibold">{child.name}</span>
-                          </div>
-                        )) : <span className="text-[10px] text-muted-foreground italic">None</span>}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {/* Description */}
+              {activity.description && (
+                <p className="text-sm text-muted-foreground leading-relaxed bg-muted/30 px-4 py-3 rounded-2xl border border-border/30">
+                  {activity.description}
+                </p>
               )}
 
               {/* Notes */}
               {activity.notes && (
-                <div className="space-y-2 pt-2">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">
-                    <MessagesSquare className="h-3.5 w-3.5 text-primary" />
-                    <span>Notes</span>
-                  </div>
-                  <div className="text-sm italic text-muted-foreground bg-primary/5 p-4 rounded-2xl border border-dashed border-primary/20 relative overflow-hidden group">
-                    <div className="absolute -right-2 -bottom-2 opacity-5 group-hover:scale-110 transition-transform">
-                      <MessagesSquare className="h-12 w-12" />
-                    </div>
-                    <span className="relative z-10">"{activity.notes}"</span>
+                <div className="flex gap-2.5 px-4 py-3 rounded-2xl bg-primary/5 border border-dashed border-primary/20">
+                  <MessagesSquare className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground italic">"{activity.notes}"</p>
+                </div>
+              )}
+
+              {/* People */}
+              {(assignedMembers.length > 0 || children.length > 0) && (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                    <Users className="h-3 w-3" /> People
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {[...assignedMembers, ...children].map(member => (
+                      <div key={member.id} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border/30">
+                        <div className="w-5 h-5 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0">
+                          {member.image_url ? (
+                            <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </div>
+                        <span className="text-xs font-semibold">{member.name}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

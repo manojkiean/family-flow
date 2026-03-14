@@ -8,24 +8,21 @@ import { UpcomingSection } from '@/components/dashboard/UpcomingSection';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
 import { ActivityForm } from '@/components/activities/ActivityForm';
-import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
+// ↓ Only change: reads from shared context instead of per-mount hooks
+import { useFamilyData } from '@/contexts/FamilyDataContext';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { Activity, ActivityCategory } from '@/types/family';
 import { toast } from '@/hooks/use-toast';
-import {
-  CheckCircle2,
-  Clock,
-  Users,
-  TrendingUp,
-  ChevronRight,
-  Loader2
-} from 'lucide-react';
+import { CheckCircle2, Clock, Users, TrendingUp, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { familyMembers, loading: membersLoading } = useFamilyMembers();
-  const { activities, loading: activitiesLoading, toggleComplete, addActivity, updateActivity } = useActivities();
+  const {
+    familyMembers, activities,
+    membersLoading, activitiesLoading,
+    toggleComplete, addActivity, updateActivity,
+  } = useFamilyData();
   const [formOpen, setFormOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ActivityCategory | undefined>();
   const [editingActivity, setEditingActivity] = useState<Activity | undefined>();
@@ -131,10 +128,10 @@ const Index = () => {
           description: `"${data.title}" has been added to your schedule.`,
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       toast({
         title: "Error",
-        description: "Failed to save activity",
+        description: err?.message || "Failed to save activity",
         variant: "destructive",
       });
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { FamilyMember, Activity, ActivityCategory, RecurrenceType, Priority, UserRole, Post } from '@/types/family';
+import { FamilyMember, Activity, ActivityCategory, RecurrenceType, Priority, UserRole, Post, Family } from '@/types/family';
 import { useAuth } from '@/hooks/useAuth';
 
 // DB row types
@@ -130,7 +130,10 @@ export function useFamilyMembers() {
   const { familyId, loading: familyLoading } = useFamilyId();
 
   const fetchMembers = useCallback(async () => {
-    if (!familyId) return;
+    if (!familyId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -156,11 +159,12 @@ export function useFamilyMembers() {
       .insert({
         name: member.name,
         role: member.role,
-        image_url: member.image_url,
-        email: member.email,
+        image_url: member.image_url || null,
+        email: member.email || null,
         color: member.color,
-        pin: member.pin,
-        user_id: user.id,
+        pin: member.pin || Math.floor(1000 + Math.random() * 9000).toString(),
+        // user_id is null for new members — they get linked when they first log in
+        user_id: null,
         family_id: familyId
       })
       .select()
@@ -169,7 +173,7 @@ export function useFamilyMembers() {
     const newMember = toFamilyMember(data as unknown as FamilyMemberRow);
     setFamilyMembers(prev => [...prev, newMember]);
     return newMember;
-  }, [user]);
+  }, [familyId]);
 
   const updateMember = useCallback(async (id: string, updates: Partial<FamilyMember>) => {
     const { data, error } = await supabase
@@ -210,7 +214,10 @@ export function useActivities() {
   const { familyId } = useFamilyId();
 
   const fetchActivities = useCallback(async () => {
-    if (!familyId) return;
+    if (!familyId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -232,7 +239,8 @@ export function useActivities() {
   const { user } = useAuth();
 
   const addActivity = useCallback(async (activity: Omit<Activity, 'id'>) => {
-    if (!familyId) throw new Error('Family not found');
+    if (!familyId) throw new Error('No family found – complete onboarding first');
+    if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('activities')
       .insert({
@@ -258,7 +266,7 @@ export function useActivities() {
     const newActivity = toActivity(data as unknown as ActivityRow);
     setActivities(prev => [...prev, newActivity]);
     return newActivity;
-  }, [user]);
+  }, [familyId, user]);
 
   const updateActivity = useCallback(async (id: string, updates: Partial<Activity>) => {
     const fields: Record<string, unknown> = {};
@@ -312,7 +320,10 @@ export function usePosts() {
   const { familyId } = useFamilyId();
 
   const fetchPosts = useCallback(async () => {
-    if (!familyId) return;
+    if (!familyId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -385,4 +396,90 @@ export function usePosts() {
   }, [fetchPosts]);
 
   return { posts, loading, error, refetch: fetchPosts, addPost, updatePost, deletePost };
+}
+
+export function useFamilies() {
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  const fetchFamilies = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      // 1. Fetch families owned by the user
+      const { data: owned, error: ownedError } = await supabase
+        .from('families')
+        .select('*')
+        .eq('owner_id', user.id);
+
+      if (ownedError) throw ownedError;
+
+      // 2. Get family_ids where user is a member (flat query — no relationship join)
+      const { data: memberRows, error: memberError } = await supabase
+        .from('family_members')
+        .select('family_id')
+        .eq('user_id', user.id)
+        .not('family_id', 'is', null);
+
+      if (memberError) throw memberError;
+
+      // 3. Fetch those families directly
+      const memberFamilyIds = (memberRows || [])
+        .map(r => r.family_id)
+        .filter(Boolean) as string[];
+
+      let memberFamilies: any[] = [];
+      if (memberFamilyIds.length > 0) {
+        const { data: mf, error: mfError } = await supabase
+          .from('families')
+          .select('*')
+          .in('id', memberFamilyIds);
+
+        if (mfError) throw mfError;
+        memberFamilies = mf || [];
+      }
+
+      // 4. Combine and deduplicate
+      const all = [...(owned || []), ...memberFamilies];
+      const unique = all.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+
+      setFamilies(unique.map(f => ({
+        id: f.id,
+        name: f.name,
+        owner_id: f.owner_id
+      })));
+    } catch (err) {
+      console.error('Error fetching families:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const switchFamily = async (familyId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ family_id: familyId })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Reload the page to refresh all contexts and data
+      window.location.reload();
+    } catch (err) {
+      console.error('Error switching family:', err);
+      throw err;
+    }
+  };
+
+  useEffect(() => {
+    fetchFamilies();
+  }, [fetchFamilies]);
+
+  return { families, loading, refetch: fetchFamilies, switchFamily };
 }

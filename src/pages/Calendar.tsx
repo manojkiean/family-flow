@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { useActivities, useFamilyMembers } from '@/hooks/useDatabase';
+import { useFamilyData } from '@/contexts/FamilyDataContext';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { Activity, ActivityCategory } from '@/types/family';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
@@ -16,8 +16,7 @@ const categoryColors: Record<ActivityCategory, string> = {
 };
 
 const CalendarPage = () => {
-  const { activities, loading: activitiesLoading } = useActivities();
-  const { familyMembers, loading: membersLoading } = useFamilyMembers();
+  const { activities, familyMembers, activitiesLoading, membersLoading } = useFamilyData();
   const { activeMember, permissions } = useActiveMember();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'week' | 'month'>('week');
@@ -117,15 +116,6 @@ const CalendarPage = () => {
       a.getDate() === b.getDate();
   };
 
-  if (loading) {
-    return (
-      <AppLayout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AppLayout>
-    );
-  }
 
   return (
     <AppLayout>

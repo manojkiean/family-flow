@@ -109,7 +109,15 @@ export type Database = {
           email?: string | null
           image_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "family_members_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       profiles: {
         Row: {
@@ -127,6 +135,7 @@ export type Database = {
           require_pin_for_children: boolean | null
           activity_history_retention: string | null
           family_id: string | null
+          email: string | null
         }
         Insert: {
           created_at?: string
@@ -143,6 +152,7 @@ export type Database = {
           require_pin_for_children?: boolean | null
           activity_history_retention?: string | null
           family_id?: string | null
+          email?: string | null
         }
         Update: {
           created_at?: string
@@ -158,6 +168,37 @@ export type Database = {
           week_starts_on?: string | null
           require_pin_for_children?: boolean | null
           activity_history_retention?: string | null
+          family_id?: string | null
+          email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      families: {
+        Row: {
+          id: string
+          name: string
+          created_at: string
+          owner_id: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_at?: string
+          owner_id?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string
+          owner_id?: string | null
         }
         Relationships: []
       }

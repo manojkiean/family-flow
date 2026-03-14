@@ -65,9 +65,11 @@ export function Header({ onMenuClick }: HeaderProps) {
 
         {/* Centered Title */}
         <div className="hidden md:flex items-center gap-2">
-          <span className="text-2xl">👨‍👩‍👧‍👦</span>
+          <div className="w-8 h-8 rounded-lg overflow-hidden shadow-sm">
+            <img src="/favicon.png" alt="Family Board" className="w-full h-full object-cover" />
+          </div>
           <h1 className="font-display font-bold text-xl bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
-            FamBoard
+            Family Board
           </h1>
         </div>
 

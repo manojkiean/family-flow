@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ActiveMemberProvider, useActiveMember } from "@/contexts/ActiveMemberContext";
-import { useFamilyMembers } from "@/hooks/useDatabase";
+import { FamilyDataProvider, useFamilyData } from "@/contexts/FamilyDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Calendar from "./pages/Calendar";
@@ -29,9 +29,7 @@ function AppWithAuth() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsRecovering(true);
-      }
+      if (event === 'PASSWORD_RECOVERY') setIsRecovering(true);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -48,19 +46,22 @@ function AppWithAuth() {
     return <Auth initialMode={isRecovering ? 'reset' : 'login'} />;
   }
 
-  return <AuthenticatedApp />;
+  return (
+    <FamilyDataProvider>
+      <AuthenticatedApp />
+    </FamilyDataProvider>
+  );
 }
 
 function AuthenticatedApp() {
-  const { familyMembers, loading, refetch } = useFamilyMembers();
-  const [setupComplete, setSetupComplete] = useState(false);
+  // Reads from the shared context — fetched once, never refetched on navigation
+  const { familyMembers, membersLoading } = useFamilyData();
 
   const handleOnboardingComplete = useCallback(() => {
-    setSetupComplete(true);
-    refetch();
-  }, [refetch]);
+    window.location.reload();
+  }, []);
 
-  if (loading) {
+  if (membersLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -68,7 +69,7 @@ function AuthenticatedApp() {
     );
   }
 
-  if (familyMembers.length === 0 && !setupComplete) {
+  if (familyMembers.length === 0) {
     return <Onboarding onComplete={handleOnboardingComplete} />;
   }
 
@@ -96,7 +97,6 @@ function AuthenticatedApp() {
   );
 }
 
-// Helper component to use context inside the same file
 const ActiveMemberConsumer = ({ children }: { children: (props: any) => React.ReactNode }) => {
   const context = useActiveMember();
   return <>{children(context)}</>;

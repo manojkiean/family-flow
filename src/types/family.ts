@@ -48,3 +48,9 @@ export interface Post {
   updated_at: string;
   author?: FamilyMember;
 }
+
+export interface Family {
+  id: string;
+  name: string;
+  owner_id?: string;
+}

@@ -143,8 +143,9 @@ const FamilyPage = () => {
       setNewImage('');
       setNewEmail('');
       setNewRole('child');
-    } catch {
-      toast({ title: "Error", description: "Failed to add member", variant: "destructive" });
+    } catch (err: any) {
+      console.error('Add member error:', err);
+      toast({ title: "Error", description: err.message || "Failed to add member", variant: "destructive" });
     } finally {
       setAdding(false);
     }

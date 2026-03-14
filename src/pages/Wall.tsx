@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { usePosts, useFamilyMembers } from '@/hooks/useDatabase';
+import { useFamilyData } from '@/contexts/FamilyDataContext';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { Post } from '@/types/family';
 
 const Wall = () => {
     const { activeMember, permissions } = useActiveMember();
-    const { posts, loading, addPost, updatePost, deletePost } = usePosts();
+    const { posts, postsLoading: loading, addPost, updatePost, deletePost } = useFamilyData();
     const [content, setContent] = useState('');
     const [image, setImage] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -75,8 +75,9 @@ const Wall = () => {
             setContent('');
             setImage(null);
             toast({ title: "Posted!", description: "Your message is on the wall." });
-        } catch (err) {
-            toast({ title: "Error", description: "Failed to post message.", variant: "destructive" });
+        } catch (err: any) {
+            console.error('Post error:', err);
+            toast({ title: "Error", description: err.message || "Failed to post message.", variant: "destructive" });
         } finally {
             setSubmitting(false);
         }
