@@ -8,7 +8,7 @@ import { FamilyMember } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Plus, Settings, ChevronRight, Crown, Star, Loader2, Save, X, Upload, User, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Plus, Settings, ChevronRight, Crown, Star, Loader2, Save, X, Upload, User, Trash2, Image as ImageIcon, KeyRound, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -31,11 +31,14 @@ const FamilyPage = () => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editPin, setEditPin] = useState('');
+  const [showPinMap, setShowPinMap] = useState<Record<string, boolean>>({});
 
   const [newName, setNewName] = useState('');
   const [newImage, setNewImage] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState<'parent' | 'child'>('child');
+  const [newPin, setNewPin] = useState('');
   const [adding, setAdding] = useState(false);
 
   const loading = membersLoading || activitiesLoading;
@@ -56,6 +59,15 @@ const FamilyPage = () => {
     setEditName(member.name);
     setEditImage(member.image_url || '');
     setEditEmail(member.email || '');
+    setEditPin(member.pin || '');
+  };
+
+  const regeneratePin = () => {
+    setEditPin(Math.floor(1000 + Math.random() * 9000).toString());
+  };
+
+  const togglePinVisibility = (memberId: string) => {
+    setShowPinMap(prev => ({ ...prev, [memberId]: !prev[memberId] }));
   };
 
   const handleSaveEdit = async () => {
@@ -68,15 +80,13 @@ const FamilyPage = () => {
         name: editName,
         image_url: editImage,
         email: editEmail,
+        pin: editPin || editingMember.pin,
       });
 
       if (emailChanged && editEmail) {
-        // TRIGGER: Send a Magic Login Link immediately to the new email
         await supabase.auth.signInWithOtp({
           email: editEmail,
-          options: {
-            emailRedirectTo: window.location.origin,
-          }
+          options: { emailRedirectTo: window.location.origin }
         });
         toast({ title: "New Invite Sent", description: `A login link has been sent to: ${editEmail}` });
       } else {
@@ -119,30 +129,30 @@ const FamilyPage = () => {
     if (!newName.trim()) return;
     setAdding(true);
     try {
+      const generatedPin = newPin.trim() || Math.floor(1000 + Math.random() * 9000).toString();
       const newMember = await addMember({
         name: newName,
         role: newRole,
         image_url: newImage,
         email: newEmail,
+        pin: generatedPin,
         color: `hsl(${Math.floor(Math.random() * 360)} 60% 50%)`
       });
 
       if (newEmail) {
-        // TRIGGER: Send a Magic Login Link immediately
         await supabase.auth.signInWithOtp({
           email: newEmail,
-          options: {
-            emailRedirectTo: window.location.origin,
-          }
+          options: { emailRedirectTo: window.location.origin }
         });
-        toast({ title: "Invite Sent", description: `A login link has been sent to ${newEmail}.` });
+        toast({ title: "Invite Sent", description: `A login link has been sent to ${newEmail}. Their PIN is: ${generatedPin}` });
       } else {
-        toast({ title: "Member Added", description: `${newName} has been added.` });
+        toast({ title: "Member Added", description: `${newName} added. Their PIN is: ${generatedPin}` });
       }
       setAddDialogOpen(false);
       setNewImage('');
       setNewEmail('');
       setNewRole('child');
+      setNewPin('');
     } catch (err: any) {
       console.error('Add member error:', err);
       toast({ title: "Error", description: err.message || "Failed to add member", variant: "destructive" });
@@ -364,6 +374,27 @@ const FamilyPage = () => {
                       )}
                     </div>
 
+                    {/* PIN badge — visible to parents only */}
+                    {permissions.canManageMembers && member.pin && (
+                      <div className="flex items-center gap-2 mb-3 px-1">
+                        <KeyRound className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-xs text-muted-foreground">PIN:</span>
+                        <span className="font-mono font-bold text-sm tracking-widest">
+                          {showPinMap[member.id] ? member.pin : '••••'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => togglePinVisibility(member.id)}
+                          className="ml-auto text-muted-foreground hover:text-foreground transition-colors"
+                          title={showPinMap[member.id] ? 'Hide PIN' : 'Show PIN'}
+                        >
+                          {showPinMap[member.id]
+                            ? <EyeOff className="h-3.5 w-3.5" />
+                            : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                    )}
+
                     <div className="flex gap-4 mb-4">
                       <div className="flex-1 bg-muted/50 rounded-xl p-3 text-center">
                         <p className="text-xl font-bold">{stats.pending}</p>
@@ -462,6 +493,36 @@ const FamilyPage = () => {
                 className="bg-muted/50 border-0"
               />
             </div>
+            {editingMember?.role === 'child' && (
+              <div>
+                <label className="text-sm font-medium mb-1.5 block flex items-center gap-1.5">
+                  <KeyRound className="h-3.5 w-3.5" /> Login PIN
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={editPin}
+                    onChange={(e) => setEditPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="4-digit PIN"
+                    inputMode="numeric"
+                    maxLength={4}
+                    className="bg-muted/50 border-0 font-mono tracking-widest text-center text-lg"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={regeneratePin}
+                    title="Generate new PIN"
+                    className="shrink-0"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Share this PIN with {editingMember.name} — they use it with their email to log in.
+                </p>
+              </div>
+            )}
             <div className="flex gap-3 justify-between pt-2">
               <Button
                 variant="ghost"
@@ -531,8 +592,28 @@ const FamilyPage = () => {
                 placeholder="email@example.com"
                 className="bg-muted/50 border-0"
               />
-              <p className="text-[10px] text-muted-foreground mt-1">They will receive an email to set their login password.</p>
+              <p className="text-[10px] text-muted-foreground mt-1">They will receive a magic link to verify their email.</p>
             </div>
+            {newRole === 'child' && (
+              <div>
+                <label className="text-sm font-medium mb-1.5 block flex items-center gap-1.5">
+                  <KeyRound className="h-3.5 w-3.5" /> Login PIN
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newPin}
+                    onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="Leave blank to auto-generate"
+                    inputMode="numeric"
+                    maxLength={4}
+                    className="bg-muted/50 border-0 font-mono tracking-widest text-center text-lg"
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  The child uses their email + this PIN to log in. A random PIN is generated if left blank.
+                </p>
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium mb-1.5 block">Role</label>
               <div className="flex gap-2">

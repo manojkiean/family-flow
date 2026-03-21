@@ -26,6 +26,10 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
+    // Clear child session flags so they don't bleed into the next login
+    localStorage.removeItem('isChildLogin');
+    localStorage.removeItem('activeMemberId');
+    localStorage.removeItem('childLoginEmail');
     await supabase.auth.signOut();
   };
 

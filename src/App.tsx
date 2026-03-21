@@ -99,6 +99,19 @@ function AuthenticatedApp() {
 
 const ActiveMemberConsumer = ({ children }: { children: (props: any) => React.ReactNode }) => {
   const context = useActiveMember();
+  const { activeMember, isChildLogin } = context;
+
+  // If this is a child PIN login, skip the ProfileSelection screen.
+  // The child member is auto-selected by ActiveMemberContext from localStorage.
+  // Show a brief spinner while the member resolves (familyMembers may still be loading).
+  if (isChildLogin && !activeMember) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return <>{children(context)}</>;
 };
 

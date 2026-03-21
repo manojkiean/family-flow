@@ -48,7 +48,7 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
   const location = useLocation();
   const navigate = useNavigate();
   const { familyMembers, loading: membersLoading } = useFamilyMembers();
-  const { activeMember, setActiveMember, logoutProfile, permissions } = useActiveMember();
+  const { activeMember, setActiveMember, logoutProfile, permissions, isChildLogin } = useActiveMember();
   const { user, signOut } = useAuth();
   const handleMemberSelect = (member: FamilyMember) => {
     setActiveMember(member);
@@ -157,7 +157,8 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
             </ul>
           </nav>
 
-          {/* Family Members — Crown for parent, Star for child */}
+          {/* Family Members switcher — hidden for child PIN logins */}
+          {!isChildLogin && (
           <div className="px-3 py-4 border-t border-border">
             <p className={cn(
               "text-xs font-medium text-muted-foreground mb-3 px-3",
@@ -204,10 +205,33 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
               )}
             </div>
           </div>
+          )}
+
+          {/* Child login: show who is logged in (read-only) */}
+          {isChildLogin && activeMember && (
+            <div className="px-3 py-4 border-t border-border">
+              <p className={cn(
+                "text-xs font-medium text-muted-foreground mb-3 px-3",
+                collapsed && "lg:hidden"
+              )}>LOGGED IN AS</p>
+              <div className={cn("flex items-center gap-3 px-3 py-2", collapsed && "lg:justify-center")}>
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center overflow-hidden shrink-0 bg-muted/50">
+                  {activeMember.image_url ? (
+                    <img src={activeMember.image_url} alt={activeMember.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Star className="h-3 w-3 text-category-home" />
+                  )}
+                </div>
+                <span className={cn("text-sm font-medium", collapsed && "lg:hidden")}>{activeMember.name}</span>
+              </div>
+            </div>
+          )}
 
           {/* Bottom actions — FAQ & Sign Out */}
           <div className="px-3 py-3 border-t border-border">
             <div className="space-y-1">
+              {/* Switch Profile — hidden for child logins */}
+              {!isChildLogin && (
               <button
                 className={cn(
                   "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all duration-200",
@@ -223,6 +247,7 @@ export function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }: Sideba
                 <Users className="h-5 w-5 text-muted-foreground shrink-0" />
                 <span className={cn("text-sm", collapsed && "lg:hidden")}>Switch Profile</span>
               </button>
+              )}
               <button
                 className={cn(
                   "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all duration-200",

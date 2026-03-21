@@ -13,10 +13,29 @@ import {
 import { Badge } from '@/components/ui/badge';
 
 export function MemberPicker() {
-  const { activeMember, setActiveMember } = useActiveMember();
+  const { activeMember, setActiveMember, isChildLogin } = useActiveMember();
   const { familyMembers } = useFamilyMembers();
 
   if (!activeMember) return null;
+
+  // Child PIN login — show avatar only, no dropdown switcher
+  if (isChildLogin) {
+    return (
+      <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg">
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+          {activeMember.image_url ? (
+            <img src={activeMember.image_url} alt={activeMember.name} className="w-full h-full object-cover" />
+          ) : (
+            <User className="h-4 w-4 text-primary" />
+          )}
+        </div>
+        <div className="hidden sm:block text-left">
+          <p className="text-sm font-medium leading-none">{activeMember.name}</p>
+          <p className="text-xs text-muted-foreground capitalize">{activeMember.role}</p>
+        </div>
+      </div>
+    );
+ }
 
   return (
     <DropdownMenu>
