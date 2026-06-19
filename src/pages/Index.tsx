@@ -145,7 +145,8 @@ const Index = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+    <>
+      <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
         {/* Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
@@ -226,7 +227,8 @@ const Index = () => {
             />
 
             {/* Family Members */}
-          </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
                 <h3 className="font-display font-semibold text-lg">Family</h3>
                 <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/family')}>
                   Manage
@@ -255,6 +257,7 @@ const Index = () => {
         initialCategory={selectedCategory}
         onSubmit={handleFormSubmit}
       />
+    </>
   );
 };
 
