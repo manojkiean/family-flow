@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppLayout } from '@/components/layout/AppLayout';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { ActivityCard } from '@/components/dashboard/ActivityCard';
 import { FamilyMemberCard } from '@/components/dashboard/FamilyMemberCard';
@@ -139,17 +138,14 @@ const Index = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AppLayout>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
         {/* Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
@@ -230,8 +226,7 @@ const Index = () => {
             />
 
             {/* Family Members */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
+          </div>
                 <h3 className="font-display font-semibold text-lg">Family</h3>
                 <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate('/family')}>
                   Manage
@@ -257,9 +252,9 @@ const Index = () => {
         onOpenChange={setFormOpen}
         familyMembers={familyMembers}
         activity={editingActivity}
+        initialCategory={selectedCategory}
         onSubmit={handleFormSubmit}
       />
-    </AppLayout>
   );
 };
 

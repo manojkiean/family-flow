@@ -67,6 +67,9 @@ export default {
           health: "hsl(var(--category-health))",
           home: "hsl(var(--category-home))",
           personal: "hsl(var(--category-personal))",
+          chores: "hsl(var(--category-chores))",
+          events: "hsl(var(--category-events))",
+          travel: "hsl(var(--category-travel))",
         },
       },
       borderRadius: {

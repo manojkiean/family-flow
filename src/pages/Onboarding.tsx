@@ -27,6 +27,7 @@ const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
       if (!user) throw new Error('Not authenticated');
 
       const parentName = yourName.trim() || emailName;
+      const pendingAuthPassword = sessionStorage.getItem('pendingAuthPassword') || '';
 
       // 1. Create the family hub
       const { data: familyData, error: familyError } = await supabase
@@ -64,9 +65,13 @@ const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
           family_name: familyName.trim(),
           family_id: familyData.id,
           email: user.email,  // reuse signup email
+          auth_password: pendingAuthPassword,
+          family_password: 'family123',
         });
 
       if (profileError) throw new Error(`Profile setup failed: ${profileError.message}`);
+
+      sessionStorage.removeItem('pendingAuthPassword');
 
       localStorage.removeItem('activeMemberId');
       toast({ title: `Welcome, ${parentName}! 🎉`, description: `${familyName} Family Hub is ready.` });

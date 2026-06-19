@@ -42,7 +42,7 @@ import { Badge } from '@/components/ui/badge';
 const activitySchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title must be less than 100 characters'),
   description: z.string().max(500, 'Description must be less than 500 characters').optional(),
-  category: z.enum(['school', 'sports', 'health', 'home', 'personal']),
+  category: z.enum(['school', 'sports', 'health', 'home', 'personal', 'chores', 'events', 'travel']),
   date: z.date({ required_error: 'Date is required' }),
   startTime: z.string().min(1, 'Start time is required'),
   endTime: z.string().optional(),
@@ -61,6 +61,7 @@ interface ActivityFormProps {
   onOpenChange: (open: boolean) => void;
   familyMembers: FamilyMember[];
   activity?: Activity;
+  initialCategory?: ActivityCategory;
   onSubmit: (data: ActivityFormData) => void;
 }
 
@@ -70,6 +71,9 @@ const categories: { value: ActivityCategory; label: string; emoji: string }[] = 
   { value: 'health', label: 'Health', emoji: '🏥' },
   { value: 'home', label: 'Home', emoji: '🏠' },
   { value: 'personal', label: 'Personal', emoji: '👤' },
+  { value: 'chores', label: 'Chores', emoji: '🧹' },
+  { value: 'events', label: 'Events', emoji: '🎉' },
+  { value: 'travel', label: 'Travel', emoji: '✈️' },
 ];
 
 const recurrenceOptions: { value: RecurrenceType; label: string }[] = [
@@ -79,13 +83,49 @@ const recurrenceOptions: { value: RecurrenceType; label: string }[] = [
   { value: 'monthly', label: 'Monthly' },
 ];
 
+const timeOptions = [
+  '00:00', '00:30',
+  '01:00', '01:30',
+  '02:00', '02:30',
+  '03:00', '03:30',
+  '04:00', '04:30',
+  '05:00', '05:30',
+  '06:00', '06:30',
+  '07:00', '07:30',
+  '08:00', '08:30',
+  '09:00', '09:30',
+  '10:00', '10:30',
+  '11:00', '11:30',
+  '12:00', '12:30',
+  '13:00', '13:30',
+  '14:00', '14:30',
+  '15:00', '15:30',
+  '16:00', '16:30',
+  '17:00', '17:30',
+  '18:00', '18:30',
+  '19:00', '19:30',
+  '20:00', '20:30',
+  '21:00', '21:30',
+  '22:00', '22:30',
+  '23:00', '23:30',
+];
+
+const NO_END_TIME = '__none__';
+
+const formatTimeLabel = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const displayHour = hours % 12 || 12;
+  return `${displayHour}:${String(minutes).padStart(2, '0')} ${period}`;
+};
+
 const priorityOptions: { value: Priority; label: string; color: string }[] = [
   { value: 'low', label: 'Low', color: 'bg-muted text-muted-foreground' },
   { value: 'medium', label: 'Medium', color: 'bg-category-home/20 text-category-home' },
   { value: 'high', label: 'High', color: 'bg-destructive/20 text-destructive' },
 ];
 
-export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSubmit }: ActivityFormProps) {
+export function ActivityForm({ open, onOpenChange, familyMembers, activity, initialCategory, onSubmit }: ActivityFormProps) {
   const isEditing = !!activity;
 
   const form = useForm<ActivityFormData>({
@@ -129,7 +169,7 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
       form.reset({
         title: '',
         description: '',
-        category: 'home',
+        category: initialCategory || 'home',
         date: new Date(),
         startTime: '09:00',
         endTime: '',
@@ -141,7 +181,7 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
         notes: '',
       });
     }
-  }, [open, activity]);
+  }, [open, activity, initialCategory]);
 
   const handleSubmit = (data: ActivityFormData) => {
     onSubmit(data);
@@ -162,13 +202,13 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Title */}
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="lg:col-span-2">
                   <FormLabel>Title *</FormLabel>
                   <FormControl>
                     <Input
@@ -183,7 +223,7 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
             />
 
             {/* Category & Priority Row */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 lg:grid-cols-2 lg:col-span-2">
               <FormField
                 control={form.control}
                 name="category"
@@ -241,7 +281,7 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
             </div>
 
             {/* Date & Time Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+            <div className="grid gap-4 lg:grid-cols-2 lg:col-span-2">
               <FormField
                 control={form.control}
                 name="date"
@@ -288,16 +328,23 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="mb-0.5">Start Time *</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="time"
-                          className="bg-muted/50 border-0 pl-9 h-10"
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-muted/50 border-0 h-10">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <SelectValue placeholder="Select start time" />
+                          </div>
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {timeOptions.map(time => (
+                          <SelectItem key={time} value={time}>
+                            {formatTimeLabel(time)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -309,49 +356,59 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="mb-0.5">End Time</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="time"
-                          className="bg-muted/50 border-0 pl-9 h-10"
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
+                    <Select
+                      onValueChange={(value) => field.onChange(value === NO_END_TIME ? '' : value)}
+                      defaultValue={field.value || NO_END_TIME}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-muted/50 border-0 h-10">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <SelectValue placeholder="Select end time" />
+                          </div>
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={NO_END_TIME}>No end time</SelectItem>
+                        {timeOptions.map(time => (
+                          <SelectItem key={time} value={time}>
+                            {formatTimeLabel(time)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="recurrence"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recurrence *</FormLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {recurrenceOptions.map(opt => (
+                        <Button
+                          key={opt.value}
+                          type="button"
+                          variant={field.value === opt.value ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => field.onChange(opt.value)}
+                          className={cn(
+                            field.value === opt.value && 'gradient-warm border-0'
+                          )}
+                        >
+                          {opt.label}
+                        </Button>
+                      ))}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
-            {/* Recurrence */}
-            <FormField
-              control={form.control}
-              name="recurrence"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Recurrence *</FormLabel>
-                  <div className="flex flex-wrap gap-2">
-                    {recurrenceOptions.map(opt => (
-                      <Button
-                        key={opt.value}
-                        type="button"
-                        variant={field.value === opt.value ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => field.onChange(opt.value)}
-                        className={cn(
-                          field.value === opt.value && 'gradient-warm border-0'
-                        )}
-                      >
-                        {opt.label}
-                      </Button>
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             {/* Assigned To (Parents) */}
             <FormField
@@ -453,54 +510,55 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
               )}
             />
 
-            {/* Location */}
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="e.g., School, Sports Center, Home"
-                        className="bg-muted/50 border-0 pl-9"
+            {/* Location & Description Row */}
+            <div className="grid gap-4 lg:grid-cols-2 lg:col-span-2">
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="e.g., School, Sports Center, Home"
+                          className="bg-muted/50 border-0 pl-9"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Add any additional details..."
+                        className="bg-muted/50 border-0 resize-none"
+                        rows={3}
                         {...field}
                       />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Description */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add any additional details..."
-                      className="bg-muted/50 border-0 resize-none"
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Notes */}
             <FormField
               control={form.control}
               name="notes"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="lg:col-span-2">
                   <FormLabel>Notes / Instructions</FormLabel>
                   <FormControl>
                     <Textarea
@@ -516,7 +574,7 @@ export function ActivityForm({ open, onOpenChange, familyMembers, activity, onSu
             />
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-4 lg:col-span-2">
               <Button
                 type="button"
                 variant="outline"

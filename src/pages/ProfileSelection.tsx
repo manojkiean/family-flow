@@ -1,9 +1,14 @@
 import { FamilyMember } from '@/types/family';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { useFamilyMembers } from '@/hooks/useDatabase';
-import { User, Crown, Star } from 'lucide-react';
+import { User, Crown, Baby } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+
+const roleIcon = {
+    parent: Crown,
+    child: Baby,
+};
 
 export function ProfileSelection() {
     const { familyMembers, loading } = useFamilyMembers();
@@ -47,7 +52,10 @@ export function ProfileSelection() {
                                 {member.image_url ? (
                                     <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
                                 ) : (
-                                    <User className="w-12 h-12 text-muted-foreground" />
+                                    (() => {
+                                        const Icon = roleIcon[member.role] ?? User;
+                                        return <Icon className="w-12 h-12 text-muted-foreground" />;
+                                    })()
                                 )}
 
                                 {/* Role Badge */}
@@ -55,7 +63,7 @@ export function ProfileSelection() {
                                     {member.role === 'parent' ? (
                                         <Crown className="h-4 w-4 text-primary" />
                                     ) : (
-                                        <Star className="h-4 w-4 text-category-home" />
+                                        <Baby className="h-4 w-4 text-category-home" />
                                     )}
                                 </div>
                             </div>

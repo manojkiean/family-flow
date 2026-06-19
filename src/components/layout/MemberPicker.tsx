@@ -1,4 +1,4 @@
-import { Crown, ChevronDown, User } from 'lucide-react';
+import { Crown, ChevronDown, User, Baby } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFamilyMembers } from '@/hooks/useDatabase';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
@@ -16,6 +16,11 @@ export function MemberPicker() {
   const { activeMember, setActiveMember, isChildLogin } = useActiveMember();
   const { familyMembers } = useFamilyMembers();
 
+  const roleIcon = {
+    parent: Crown,
+    child: Baby,
+  };
+
   if (!activeMember) return null;
 
   // Child PIN login — show avatar only, no dropdown switcher
@@ -26,7 +31,10 @@ export function MemberPicker() {
           {activeMember.image_url ? (
             <img src={activeMember.image_url} alt={activeMember.name} className="w-full h-full object-cover" />
           ) : (
-            <User className="h-4 w-4 text-primary" />
+            (() => {
+              const Icon = roleIcon[activeMember.role] ?? User;
+              return <Icon className="h-4 w-4 text-primary" />;
+            })()
           )}
         </div>
         <div className="hidden sm:block text-left">
@@ -69,7 +77,10 @@ export function MemberPicker() {
               {member.image_url ? (
                 <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
               ) : (
-                <User className="h-4 w-4 text-muted-foreground" />
+                (() => {
+                  const Icon = roleIcon[member.role] ?? User;
+                  return <Icon className="h-4 w-4 text-muted-foreground" />;
+                })()
               )}
             </div>
             <div className="flex-1">

@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import { AppLayout } from '@/components/layout/AppLayout';
 import { useFamilyData } from '@/contexts/FamilyDataContext';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -109,8 +108,7 @@ const Wall = () => {
     };
 
     return (
-        <AppLayout>
-            <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
+        <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
                 {/* Header */}
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-xl">
@@ -303,7 +301,6 @@ const Wall = () => {
                     )}
                 </div>
             </div>
-        </AppLayout>
     );
 };
 

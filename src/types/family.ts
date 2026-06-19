@@ -1,6 +1,6 @@
 export type UserRole = 'parent' | 'child' | 'caregiver';
 
-export type ActivityCategory = 'school' | 'sports' | 'health' | 'home' | 'personal';
+export type ActivityCategory = 'school' | 'sports' | 'health' | 'home' | 'personal' | 'chores' | 'events' | 'travel';
 
 export type RecurrenceType = 'once' | 'daily' | 'weekly' | 'monthly';
 

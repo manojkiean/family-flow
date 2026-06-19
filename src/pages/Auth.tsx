@@ -66,14 +66,32 @@ const Auth = ({ initialMode = 'login' }: { initialMode?: AuthMode }) => {
     setLoading(true);
     try {
       if (mode === 'reset') {
-        const { error } = await supabase.auth.updateUser({ password });
+        const { data, error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
+        if (data.user) {
+          await supabase
+            .from('profiles')
+            .upsert({
+              user_id: data.user.id,
+              auth_password: password,
+              updated_at: new Date().toISOString(),
+            } as any, { onConflict: 'user_id' });
+        }
         toast({ title: 'Password Updated!', description: 'Welcome home!' });
         window.location.href = window.location.origin;
 
       } else if (mode === 'login') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (data.user) {
+          await supabase
+            .from('profiles')
+            .upsert({
+              user_id: data.user.id,
+              auth_password: password,
+              updated_at: new Date().toISOString(),
+            } as any, { onConflict: 'user_id' });
+        }
         // Clear any leftover child session flags from a previous child PIN login
         localStorage.removeItem('isChildLogin');
         localStorage.removeItem('activeMemberId');
@@ -86,6 +104,7 @@ const Auth = ({ initialMode = 'login' }: { initialMode?: AuthMode }) => {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        sessionStorage.setItem('pendingAuthPassword', password);
         // Clear any leftover child session flags
         localStorage.removeItem('isChildLogin');
         localStorage.removeItem('activeMemberId');

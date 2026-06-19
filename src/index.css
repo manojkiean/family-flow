@@ -42,6 +42,9 @@
     --category-health: 340 70% 60%;
     --category-home: 35 85% 55%;
     --category-personal: 270 50% 60%;
+    --category-chores: 180 45% 45%;
+    --category-events: 310 65% 55%;
+    --category-travel: 210 75% 50%;
 
     /* Gradients */
     --gradient-warm: linear-gradient(135deg, hsl(15 85% 60%) 0%, hsl(35 85% 55%) 100%);
@@ -165,6 +168,18 @@
     @apply bg-[hsl(var(--category-personal))] text-white;
   }
 
+  .category-chores {
+    @apply bg-[hsl(var(--category-chores))] text-white;
+  }
+
+  .category-events {
+    @apply bg-[hsl(var(--category-events))] text-white;
+  }
+
+  .category-travel {
+    @apply bg-[hsl(var(--category-travel))] text-white;
+  }
+
   /* Soft category backgrounds */
   .category-school-soft {
     @apply bg-[hsl(var(--category-school)/0.1)] text-[hsl(var(--category-school))];
@@ -184,6 +199,18 @@
 
   .category-personal-soft {
     @apply bg-[hsl(var(--category-personal)/0.1)] text-[hsl(var(--category-personal))];
+  }
+
+  .category-chores-soft {
+    @apply bg-[hsl(var(--category-chores)/0.1)] text-[hsl(var(--category-chores))];
+  }
+
+  .category-events-soft {
+    @apply bg-[hsl(var(--category-events)/0.1)] text-[hsl(var(--category-events))];
+  }
+
+  .category-travel-soft {
+    @apply bg-[hsl(var(--category-travel)/0.1)] text-[hsl(var(--category-travel))];
   }
 }
 

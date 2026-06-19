@@ -15,6 +15,9 @@ const categoryColors: Record<ActivityCategory, string> = {
   health: 'bg-category-health',
   home: 'bg-category-home',
   personal: 'bg-category-personal',
+  chores: 'bg-category-chores',
+  events: 'bg-category-events',
+  travel: 'bg-category-travel',
 };
 
 export function DashboardCalendar({ activities }: DashboardCalendarProps) {

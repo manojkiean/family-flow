@@ -27,6 +27,9 @@ const categoryStyles: Record<ActivityCategory, { bg: string; text: string; label
   health: { bg: 'category-health-soft', text: 'text-category-health', label: 'Health', emoji: '🏥' },
   home: { bg: 'category-home-soft', text: 'text-category-home', label: 'Home', emoji: '🏠' },
   personal: { bg: 'category-personal-soft', text: 'text-category-personal', label: 'Personal', emoji: '👤' },
+  chores: { bg: 'category-chores-soft', text: 'text-category-chores', label: 'Chores', emoji: '🧹' },
+  events: { bg: 'category-events-soft', text: 'text-category-events', label: 'Events', emoji: '🎉' },
+  travel: { bg: 'category-travel-soft', text: 'text-category-travel', label: 'Travel', emoji: '✈️' },
 };
 
 export function ActivityCard({ activity, familyMembers, onToggleComplete, onEdit, compact }: ActivityCardProps) {

@@ -4,6 +4,9 @@ import {
   Heart, 
   Home, 
   User,
+  ClipboardList,
+  CalendarDays,
+  Plane,
   Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,6 +22,9 @@ const quickActions = [
   { category: 'health' as ActivityCategory, icon: Heart, label: 'Health', color: 'category-health' },
   { category: 'home' as ActivityCategory, icon: Home, label: 'Home', color: 'category-home' },
   { category: 'personal' as ActivityCategory, icon: User, label: 'Personal', color: 'category-personal' },
+  { category: 'chores' as ActivityCategory, icon: ClipboardList, label: 'Chores', color: 'category-chores' },
+  { category: 'events' as ActivityCategory, icon: CalendarDays, label: 'Events', color: 'category-events' },
+  { category: 'travel' as ActivityCategory, icon: Plane, label: 'Travel', color: 'category-travel' },
 ];
 
 export function QuickActions({ onAddActivity }: QuickActionsProps) {

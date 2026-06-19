@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, HelpCircle, MessageSquare, Shield, Clock, Users } from 'lucide-react';
 import {
@@ -58,8 +57,7 @@ const FAQ = () => {
     const navigate = useNavigate();
 
     return (
-        <AppLayout>
-            <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
+        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
                 {/* Header */}
                 <div className="flex flex-col gap-4">
                     <Button
@@ -126,7 +124,6 @@ const FAQ = () => {
                     </div>
                 </div>
             </div>
-        </AppLayout>
     );
 };
 

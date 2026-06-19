@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppLayout } from '@/components/layout/AppLayout';
 import { useFamilyMembers, useActivities } from '@/hooks/useDatabase';
 import { supabase } from '@/integrations/supabase/client';
 import { useActiveMember } from '@/contexts/ActiveMemberContext';
@@ -8,7 +7,7 @@ import { FamilyMember } from '@/types/family';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Plus, Settings, ChevronRight, Crown, Star, Loader2, Save, X, Upload, User, Trash2, Image as ImageIcon, KeyRound, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { Plus, Settings, ChevronRight, Crown, Baby, Loader2, Save, X, Upload, User, Trash2, Image as ImageIcon, KeyRound, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -17,6 +16,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+
+const roleIcon = {
+  parent: Crown,
+  child: Baby,
+};
 
 const FamilyPage = () => {
   const navigate = useNavigate();
@@ -210,21 +214,17 @@ const FamilyPage = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AppLayout>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display font-bold text-2xl">Family Members</h1>
+        </div>
             <p className="text-muted-foreground">
               {familyMembers.length} members · {parents.length} parents · {children.length} children
             </p>
@@ -266,7 +266,10 @@ const FamilyPage = () => {
                       {member.image_url ? (
                         <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
                       ) : (
-                        <User className="h-8 w-8 text-muted-foreground" />
+                        (() => {
+                          const Icon = roleIcon[member.role] ?? User;
+                          return <Icon className="h-8 w-8 text-muted-foreground" />;
+                        })()
                       )}
                     </div>
 
@@ -322,7 +325,7 @@ const FamilyPage = () => {
         {/* Children Section */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Star className="h-5 w-5 text-category-home" />
+            <Baby className="h-5 w-5 text-category-home" />
             <h2 className="font-display font-semibold text-lg">Children</h2>
           </div>
 
@@ -348,7 +351,7 @@ const FamilyPage = () => {
                         {member.image_url ? (
                           <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
                         ) : (
-                          <User className="h-6 w-6 text-muted-foreground" />
+                          <Baby className="h-6 w-6 text-muted-foreground" />
                         )}
                       </div>
                       <div className="flex-1">
@@ -633,7 +636,7 @@ const FamilyPage = () => {
                   onClick={() => setNewRole('child')}
                   className={cn(newRole === 'child' && 'gradient-warm border-0')}
                 >
-                  <Star className="h-4 w-4 mr-1" /> Child
+                  <Baby className="h-4 w-4 mr-1" /> Child
                 </Button>
               </div>
             </div>
@@ -649,7 +652,6 @@ const FamilyPage = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </AppLayout>
   );
 };
 

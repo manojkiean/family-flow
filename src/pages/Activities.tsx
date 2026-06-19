@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AppLayout } from '@/components/layout/AppLayout';
 import { ActivityCard } from '@/components/dashboard/ActivityCard';
 import { ActivityForm } from '@/components/activities/ActivityForm';
 import { useFamilyData } from '@/contexts/FamilyDataContext';
@@ -20,6 +19,9 @@ const categories: { value: ActivityCategory | 'all'; label: string }[] = [
   { value: 'health', label: 'Health' },
   { value: 'home', label: 'Home' },
   { value: 'personal', label: 'Personal' },
+  { value: 'chores', label: 'Chores' },
+  { value: 'events', label: 'Events' },
+  { value: 'travel', label: 'Travel' },
 ];
 
 const ActivitiesPage = () => {
@@ -147,12 +149,10 @@ const ActivitiesPage = () => {
 
 
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display font-bold text-2xl">Activities</h1>
+        </div>
             <p className="text-muted-foreground">
               {pendingCount} pending · {completedCount} completed
             </p>
@@ -277,7 +277,6 @@ const ActivitiesPage = () => {
         activity={editingActivity}
         onSubmit={handleFormSubmit}
       />
-    </AppLayout>
   );
 };
 

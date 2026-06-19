@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ActiveMemberProvider, useActiveMember } from "@/contexts/ActiveMemberContext";
 import { FamilyDataProvider, useFamilyData } from "@/contexts/FamilyDataContext";
 import { useAuth } from "@/hooks/useAuth";
+import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import Calendar from "./pages/Calendar";
 import Activities from "./pages/Activities";
@@ -80,16 +81,18 @@ function AuthenticatedApp() {
           !activeMember ? (
             <ProfileSelection />
           ) : (
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/activities" element={<Activities />} />
-              <Route path="/family" element={<Family />} />
-              <Route path="/wall" element={<Wall />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppLayout>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/activities" element={<Activities />} />
+                <Route path="/family" element={<Family />} />
+                <Route path="/wall" element={<Wall />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AppLayout>
           )
         }
       </ActiveMemberConsumer>

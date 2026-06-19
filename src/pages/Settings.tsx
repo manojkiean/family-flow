@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
-import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,13 +18,37 @@ import {
   Save
 } from 'lucide-react';
 
+const timezoneOptions = [
+  'London, UK (GMT/BST)',
+  'India (IST)',
+  'New York, USA (ET)',
+  'Chicago, USA (CT)',
+  'Denver, USA (MT)',
+  'Los Angeles, USA (PT)',
+  'Dubai, UAE (GST)',
+  'Singapore (SGT)',
+  'Sydney, Australia (AEST)',
+];
+
+const legacyTimezoneMap: Record<string, string> = {
+  'Eastern Time (ET)': 'New York, USA (ET)',
+  'Central Time (CT)': 'Chicago, USA (CT)',
+  'Mountain Time (MT)': 'Denver, USA (MT)',
+  'Pacific Time (PT)': 'Los Angeles, USA (PT)',
+};
+
+const normalizeTimezone = (value?: string | null) => {
+  if (!value) return timezoneOptions[0];
+  return legacyTimezoneMap[value] ?? value;
+};
+
 const SettingsPage = () => {
   const { user } = useAuth();
   const [familyName, setFamilyName] = useState('FamilyHub');
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [reminderTime, setReminderTime] = useState('1 hour');
-  const [timezone, setTimezone] = useState('Eastern Time (ET)');
+  const [timezone, setTimezone] = useState(timezoneOptions[0]);
   const [weekStartsOn, setWeekStartsOn] = useState('Sunday');
   const [requirePin, setRequirePin] = useState(false);
   const [retention, setRetention] = useState('Forever');
@@ -45,7 +68,7 @@ const SettingsPage = () => {
             setPushNotifications(data.push_notifications ?? true);
             setEmailNotifications(data.email_notifications ?? false);
             setReminderTime(data.reminder_time ?? '1 hour');
-            setTimezone(data.timezone ?? 'Eastern Time (ET)');
+            setTimezone(normalizeTimezone(data.timezone));
             setWeekStartsOn(data.week_starts_on ?? 'Sunday');
             setRequirePin(data.require_pin_for_children ?? false);
             setRetention(data.activity_history_retention ?? 'Forever');
@@ -90,8 +113,7 @@ const SettingsPage = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
+    <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
         {/* Header */}
         <div>
           <h1 className="font-display font-bold text-2xl">Settings</h1>
@@ -195,10 +217,11 @@ const SettingsPage = () => {
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
               >
-                <option>Eastern Time (ET)</option>
-                <option>Central Time (CT)</option>
-                <option>Mountain Time (MT)</option>
-                <option>Pacific Time (PT)</option>
+                {timezoneOptions.map(option => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -286,8 +309,7 @@ const SettingsPage = () => {
             Save Changes
           </Button>
         </div>
-      </div>
-    </AppLayout>
+    </div>
   );
 };
 
