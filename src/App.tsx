@@ -21,6 +21,9 @@ import Onboarding from "./pages/Onboarding";
 import { ProfileSelection } from "./pages/ProfileSelection";
 import Auth from "./pages/Auth";
 import { Loader2 } from 'lucide-react';
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { OfflineBanner } from "@/components/pwa/OfflineBanner";
+import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 
 const queryClient = new QueryClient();
 
@@ -121,6 +124,10 @@ const ActiveMemberConsumer = ({ children }: { children: (props: any) => React.Re
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      {/* PWA overlays — always mounted at root level */}
+      <OfflineBanner />
+      <InstallPrompt />
+      <UpdatePrompt />
       <Toaster />
       <Sonner />
       <BrowserRouter>

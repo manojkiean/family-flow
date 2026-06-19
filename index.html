@@ -3,24 +3,47 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- TODO: Set the document title to the name of your application -->
-  <title>Family Board</title>
-  <meta name="description" content="A shared organizing hub for the whole family." />
-  <meta name="author" content="FamilyBoard" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>FamilyNest</title>
+  <meta name="description" content="Your family's shared organizing hub — calendars, tasks, activities and more." />
+  <meta name="author" content="FamilyNest" />
 
+  <!-- PWA Theme Color -->
+  <meta name="theme-color" content="#7C3AED" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#7C3AED" media="(prefers-color-scheme: light)" />
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FamilyNest" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512.png" />
   <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="apple-touch-icon" href="/favicon.png" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 
-  <!-- TODO: Update og:title to match your application name -->
-  <meta property="og:title" content="Family Board" />
-  <meta property="og:description" content="Your family's central organizing hub." />
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="FamilyNest" />
+  <meta property="og:description" content="Your family's shared organizing hub — calendars, tasks, activities and more." />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="/favicon.png" />
+  <meta property="og:image" content="/pwa-512.png" />
+  <meta property="og:site_name" content="FamilyNest" />
 
+  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:site" content="@FamilyBoard" />
-  <meta name="twitter:image" content="/favicon.png" />
+  <meta name="twitter:title" content="FamilyNest" />
+  <meta name="twitter:description" content="Your family's shared organizing hub." />
+  <meta name="twitter:image" content="/pwa-512.png" />
+
+  <!-- Microsoft Tiles -->
+  <meta name="msapplication-TileColor" content="#7C3AED" />
+  <meta name="msapplication-TileImage" content="/pwa-192.png" />
 </head>
 
 <body>
