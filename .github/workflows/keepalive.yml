@@ -1,0 +1,15 @@
+name: Supabase Keepalive
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call Supabase
+        run: |
+          curl -f "${{ secrets.KEEPALIVE_URL }}"
